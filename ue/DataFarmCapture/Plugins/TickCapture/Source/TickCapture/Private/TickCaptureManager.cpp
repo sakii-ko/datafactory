@@ -1,0 +1,180 @@
+#include "TickCaptureManager.h"
+
+#include "Components/SceneCaptureComponent2D.h"
+#include "Engine/TextureRenderTarget2D.h"
+#include "TextureResource.h"
+#include "RHIGPUReadback.h"
+#include "RenderingThread.h"
+#include "IImageWrapper.h"
+#include "IImageWrapperModule.h"
+#include "Modules/ModuleManager.h"
+#include "Misc/App.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "HAL/FileManager.h"
+#include "HAL/PlatformMisc.h"
+#include "Async/Async.h"
+
+ATickCaptureManager::ATickCaptureManager()
+{
+	PrimaryActorTick.bCanEverTick = true;
+	SceneCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCapture"));
+	RootComponent = SceneCapture;
+}
+
+void ATickCaptureManager::SetAction(const TArray<uint8>& Keys)
+{
+	for (int32 i = 0; i < 6 && i < Keys.Num(); ++i)
+	{
+		Action[i] = Keys[i] ? 1 : 0;
+	}
+}
+
+void ATickCaptureManager::BeginPlay()
+{
+	Super::BeginPlay();
+	if (!bConfigured)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("TickCapture: BeginPlay with no config; idle."));
+		return;
+	}
+	RenderTarget = NewObject<UTextureRenderTarget2D>(this);
+	RenderTarget->ClearColor = FLinearColor::Black;
+	RenderTarget->bAutoGenerateMips = false;
+	RenderTarget->InitCustomFormat(Cfg.Width, Cfg.Height, PF_B8G8R8A8, false);
+	RenderTarget->UpdateResourceImmediate(true);
+
+	SceneCapture->TextureTarget = RenderTarget;
+	SceneCapture->bCaptureEveryFrame = false;
+	SceneCapture->bCaptureOnMovement = false;
+	SceneCapture->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+
+	if (!TrackedActor)
+	{
+		TrackedActor = this;
+	}
+	IFileManager::Get().MakeDirectory(*(Cfg.OutDir / TEXT("frames")), true);
+
+	FApp::SetUseFixedTimeStep(true);
+	FApp::SetFixedDeltaTime(1.0 / FMath::Max(1.f, Cfg.Fps));
+	UE_LOG(LogTemp, Display, TEXT("TickCapture: capturing %d frames -> %s"), Cfg.NumFrames, *Cfg.OutDir);
+}
+
+void ATickCaptureManager::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	if (bDone || !bConfigured)
+	{
+		return;
+	}
+	DrainReadbacks();
+
+	if (TickCount >= Cfg.WarmupFrames + Cfg.NumFrames)
+	{
+		if (Pending.Num() == 0)
+		{
+			Finish();
+		}
+		return;
+	}
+
+	if (Cfg.bOrbitTest)
+	{
+		const float Ang = TickCount * 0.05f;
+		SetActorLocation(FVector(600.f * FMath::Cos(Ang), 600.f * FMath::Sin(Ang), 200.f));
+		SetActorRotation(FRotator(-10.f, FMath::RadiansToDegrees(Ang) + 180.f, 0.f));
+	}
+
+	SceneCapture->CaptureScene();
+	if (TickCount >= Cfg.WarmupFrames)
+	{
+		EnqueueFrame(TickCount - Cfg.WarmupFrames);
+	}
+	++TickCount;
+}
+
+void ATickCaptureManager::EnqueueFrame(int32 OutIndex)
+{
+	const FString Row = BuildRow(OutIndex);
+	TSharedPtr<FRHIGPUTextureReadback> RB = MakeShared<FRHIGPUTextureReadback>(TEXT("DataFarmReadback"));
+	FRHIGPUTextureReadback* RBptr = RB.Get();
+	FTextureRenderTargetResource* RTRes = RenderTarget->GetRenderTargetResource();
+
+	ENQUEUE_RENDER_COMMAND(DataFarmEnqueueCopy)(
+		[RBptr, RTRes](FRHICommandListImmediate& RHICmdList)
+		{
+			RBptr->EnqueueCopy(RHICmdList, RTRes->GetRenderTargetTexture());
+		});
+
+	Pending.Add({RB, OutIndex, Row});
+}
+
+void ATickCaptureManager::DrainReadbacks()
+{
+	const int32 W = Cfg.Width;
+	const int32 H = Cfg.Height;
+	while (Pending.Num() > 0 && Pending[0].Readback->IsReady())
+	{
+		FPendingReadback P = Pending[0];
+		Pending.RemoveAt(0);
+
+		int32 RowPitchInPixels = 0;
+		const uint8* Src = static_cast<const uint8*>(P.Readback->Lock(RowPitchInPixels));
+		TArray<FColor> Pixels;
+		Pixels.SetNumUninitialized(W * H);
+		for (int32 y = 0; y < H; ++y)
+		{
+			const FColor* SrcRow = reinterpret_cast<const FColor*>(Src + static_cast<int64>(y) * RowPitchInPixels * 4);
+			for (int32 x = 0; x < W; ++x)
+			{
+				Pixels[y * W + x] = SrcRow[x];
+			}
+		}
+		P.Readback->Unlock();
+
+		const FString Path = Cfg.OutDir / FString::Printf(TEXT("frames/%06d.png"), P.OutIndex);
+		Async(EAsyncExecution::ThreadPool, [Pixels = MoveTemp(Pixels), W, H, Path]()
+		{
+			IImageWrapperModule& Mod = FModuleManager::LoadModuleChecked<IImageWrapperModule>("ImageWrapper");
+			TSharedPtr<IImageWrapper> Img = Mod.CreateImageWrapper(EImageFormat::PNG);
+			Img->SetRaw(Pixels.GetData(), static_cast<int64>(Pixels.Num()) * sizeof(FColor), W, H, ERGBFormat::BGRA, 8);
+			FFileHelper::SaveArrayToFile(Img->GetCompressed(100), *Path);
+		});
+		Rows.Add(P.Row);
+	}
+}
+
+FString ATickCaptureManager::BuildRow(int32 OutIndex) const
+{
+	const FTransform PT = TrackedActor ? TrackedActor->GetActorTransform() : GetActorTransform();
+	const FTransform CT = SceneCapture->GetComponentTransform();
+	const FVector PP = PT.GetLocation();
+	const FQuat PQ = PT.GetRotation();
+	const FVector CP = CT.GetLocation();
+	const FQuat CQ = CT.GetRotation();
+	return FString::Printf(
+		TEXT("%d,%f,frames/%06d.png,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%d,%d,%d"),
+		OutIndex, OutIndex / Cfg.Fps, OutIndex,
+		PP.X, PP.Y, PP.Z, PQ.W, PQ.X, PQ.Y, PQ.Z,
+		CP.X, CP.Y, CP.Z, CQ.W, CQ.X, CQ.Y, CQ.Z,
+		Action[0], Action[1], Action[2], Action[3], Action[4], Action[5]);
+}
+
+void ATickCaptureManager::Finish()
+{
+	bDone = true;
+	const FString Header = TEXT("index,t,rgb,player_x,player_y,player_z,player_qw,player_qx,player_qy,player_qz,")
+		TEXT("cam_x,cam_y,cam_z,cam_qw,cam_qx,cam_qy,cam_qz,forward,back,left,right,jump,attack");
+	FFileHelper::SaveStringToFile(Header + TEXT("\n") + FString::Join(Rows, TEXT("\n")) + TEXT("\n"),
+		*(Cfg.OutDir / TEXT("steps.csv")));
+
+	const FString Meta = FString::Printf(
+		TEXT("{\n  \"episode_id\": \"%s\",\n  \"source\": \"ue\",\n  \"viewpoint\": \"%s\",\n")
+		TEXT("  \"label_kind\": \"precise_action\",\n  \"fps\": %f,\n  \"resolution\": [%d, %d],\n")
+		TEXT("  \"seed\": %d,\n  \"coord_frame\": \"ue_left_cm\",\n  \"schema_version\": 1,\n  \"num_steps\": %d\n}\n"),
+		*Cfg.EpisodeId, *Cfg.Viewpoint, Cfg.Fps, Cfg.Width, Cfg.Height, Cfg.Seed, Rows.Num());
+	FFileHelper::SaveStringToFile(Meta, *(Cfg.OutDir / TEXT("meta.json")));
+
+	UE_LOG(LogTemp, Display, TEXT("TickCapture: wrote %d frames -> %s"), Rows.Num(), *Cfg.OutDir);
+	FPlatformMisc::RequestExit(false);
+}

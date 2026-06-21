@@ -1,0 +1,13 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "",
+	"Category": "",
+	"Description": "World-model data farm: UE5 headless tick-synchronized capture.",
+	"Modules": [
+		{
+			"Name": "DataFarmCapture",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
