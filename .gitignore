@@ -1,0 +1,30 @@
+# non-committed cumbersome / local-only scripts and experiments
+scratch/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# data farm outputs (never commit generated datasets)
+out/
+runs/
+datasets/
+*.mp4
+*.png
+*.jpg
+*.exr
+!docs/**/*.png
+
+# UE build/intermediate
+ue/**/Binaries/
+ue/**/Intermediate/
+ue/**/Saved/
+ue/**/DerivedDataCache/
+
+# env / secrets
+.env
+*.local
