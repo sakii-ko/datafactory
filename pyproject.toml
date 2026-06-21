@@ -2,7 +2,7 @@
 name = "datafarm"
 version = "0.0.1"
 description = "World-model data farm: batch generation of action-labeled FPV/TPV video, Matrix-Game-3.0 style."
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.26",
     "pillow>=10.0",
