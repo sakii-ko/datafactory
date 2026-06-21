@@ -1,21 +1,28 @@
 from __future__ import annotations
 
 import ctypes.util
+import json
 import os
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
 from ..schema import Episode
+from ..writers import read_episode
 from .base import BackendStatus, CaptureBackend, EpisodePlan, JobSpec, default_plan
 
 DEFAULT_UE_ROOT = "/root/nas/bigdata1/cjw/UnrealEngine_5.5.4"
+_REPO = Path(__file__).resolve().parents[2]
 
 
 @dataclass
 class UEConfig:
     ue_root: str = os.environ.get("DATAFARM_UE_ROOT", DEFAULT_UE_ROOT)
-    project: str = os.environ.get("DATAFARM_UE_PROJECT", "")
-    map_name: str = os.environ.get("DATAFARM_UE_MAP", "")
+    project: str = str(_REPO / "ue/DataFarmCapture/DataFarmCapture.uproject")
+    map_name: str = os.environ.get("DATAFARM_UE_MAP", "/Game/Maps/Capture")
+    warmup_frames: int = 6
+    orbit_test: bool = True   # placeholder camera motion until the P7 agent drives the pawn
+    timeout_s: int = 1800
 
     @property
     def editor_cmd(self) -> Path:
@@ -44,7 +51,29 @@ class UEBackend(CaptureBackend):
         return default_plan(job)
 
     def capture(self, plan: EpisodePlan, out_root: Path, gpu: int | None = None) -> Episode:
-        raise NotImplementedError("UEBackend.capture pending P6/P8 (TickCapture plugin + wiring).")
+        out_dir = (Path(out_root) / plan.episode_id).resolve()
+        (out_dir / "frames").mkdir(parents=True, exist_ok=True)
+        cfg = {
+            "episode_id": plan.episode_id,
+            "out_dir": str(out_dir),
+            "width": int(plan.resolution[0]),
+            "height": int(plan.resolution[1]),
+            "fps": float(plan.fps),
+            "num_frames": int(plan.steps),
+            "warmup_frames": int(self.cfg.warmup_frames),
+            "viewpoint": plan.viewpoint.value,
+            "seed": int(plan.seed),
+            "orbit_test": bool(plan.extra.get("orbit_test", self.cfg.orbit_test)),
+        }
+        cfg_path = out_dir / "render_config.json"
+        cfg_path.write_text(json.dumps(cfg, indent=2))
+        args = ["bash", str(_REPO / "scripts" / "ue_capture.sh"), str(cfg_path)]
+        if gpu is not None:
+            args.append(str(gpu))
+        subprocess.run(args, check=True, capture_output=True, timeout=self.cfg.timeout_s)
+        if not (out_dir / "steps.csv").exists():
+            raise RuntimeError(f"UE capture produced no steps.csv in {out_dir}")
+        return read_episode(out_dir)
 
     def healthcheck(self) -> BackendStatus:
         issues = []

@@ -46,6 +46,7 @@ private:
 	void EnqueueFrame(int32 OutIndex);
 	void DrainReadbacks();
 	void Finish();
+	void SpawnTestScene();
 	FString BuildRow(int32 OutIndex) const;
 
 	UPROPERTY()

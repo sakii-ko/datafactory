@@ -14,6 +14,16 @@
 #include "HAL/FileManager.h"
 #include "HAL/PlatformMisc.h"
 #include "Async/Async.h"
+#include "Engine/World.h"
+#include "Engine/DirectionalLight.h"
+#include "Engine/SkyLight.h"
+#include "Engine/StaticMesh.h"
+#include "Engine/StaticMeshActor.h"
+#include "Components/DirectionalLightComponent.h"
+#include "Components/SkyLightComponent.h"
+#include "Components/SkyAtmosphereComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "UObject/ConstructorHelpers.h"
 
 ATickCaptureManager::ATickCaptureManager()
 {
@@ -52,6 +62,10 @@ void ATickCaptureManager::BeginPlay()
 	if (!TrackedActor)
 	{
 		TrackedActor = this;
+	}
+	if (Cfg.bOrbitTest)
+	{
+		SpawnTestScene();
 	}
 	IFileManager::Get().MakeDirectory(*(Cfg.OutDir / TEXT("frames")), true);
 
@@ -98,7 +112,7 @@ void ATickCaptureManager::EnqueueFrame(int32 OutIndex)
 	const FString Row = BuildRow(OutIndex);
 	TSharedPtr<FRHIGPUTextureReadback> RB = MakeShared<FRHIGPUTextureReadback>(TEXT("DataFarmReadback"));
 	FRHIGPUTextureReadback* RBptr = RB.Get();
-	FTextureRenderTargetResource* RTRes = RenderTarget->GetRenderTargetResource();
+	FTextureRenderTargetResource* RTRes = RenderTarget->GameThread_GetRenderTargetResource();
 
 	ENQUEUE_RENDER_COMMAND(DataFarmEnqueueCopy)(
 		[RBptr, RTRes](FRHICommandListImmediate& RHICmdList)
@@ -158,6 +172,48 @@ FString ATickCaptureManager::BuildRow(int32 OutIndex) const
 		PP.X, PP.Y, PP.Z, PQ.W, PQ.X, PQ.Y, PQ.Z,
 		CP.X, CP.Y, CP.Z, CQ.W, CQ.X, CQ.Y, CQ.Z,
 		Action[0], Action[1], Action[2], Action[3], Action[4], Action[5]);
+}
+
+void ATickCaptureManager::SpawnTestScene()
+{
+	UWorld* W = GetWorld();
+	if (!W) return;
+	FActorSpawnParameters SP;
+
+	if (ADirectionalLight* Sun = W->SpawnActor<ADirectionalLight>(FVector(0, 0, 1000), FRotator(-45, 45, 0), SP))
+	{
+		if (auto* L = Cast<UDirectionalLightComponent>(Sun->GetLightComponent()))
+		{
+			L->SetMobility(EComponentMobility::Movable);
+			L->SetIntensity(6.f);
+			L->SetAtmosphereSunLight(true);
+		}
+	}
+	W->SpawnActor<ASkyAtmosphere>(FVector::ZeroVector, FRotator::ZeroRotator, SP);
+	if (ASkyLight* Sky = W->SpawnActor<ASkyLight>(FVector(0, 0, 500), FRotator::ZeroRotator, SP))
+	{
+		Sky->GetLightComponent()->SetMobility(EComponentMobility::Movable);
+		Sky->GetLightComponent()->SetIntensity(1.f);
+	}
+
+	UStaticMesh* Plane = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Plane.Plane"));
+	UStaticMesh* Cube = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+	auto SpawnMesh = [&](UStaticMesh* M, const FVector& Loc, const FVector& Scale)
+	{
+		if (!M) return;
+		AStaticMeshActor* A = W->SpawnActor<AStaticMeshActor>(Loc, FRotator::ZeroRotator, SP);
+		if (!A) return;
+		A->GetStaticMeshComponent()->SetMobility(EComponentMobility::Movable);
+		A->GetStaticMeshComponent()->SetStaticMesh(M);
+		A->SetActorScale3D(Scale);
+	};
+	SpawnMesh(Plane, FVector(0, 0, 0), FVector(80, 80, 1));
+	const FVector Cubes[] = {{400, 0, 100}, {0, 400, 100}, {-400, 0, 100}, {0, -400, 100}, {300, 300, 100}};
+	for (const FVector& P : Cubes)
+	{
+		SpawnMesh(Cube, P, FVector(2, 2, 2));
+	}
+	UE_LOG(LogTemp, Display, TEXT("TickCapture: spawned runtime test scene."));
 }
 
 void ATickCaptureManager::Finish()
