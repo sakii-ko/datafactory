@@ -20,8 +20,8 @@ def _fake_ue(cfg: dict):
     for i in range(cfg["num_frames"]):
         Image.fromarray(np.zeros((cfg["height"], cfg["width"], 3), np.uint8)).save(
             out / f"frames/{i:06d}.png")
-        # player xyz + quat(identity) + cam xyz + quat(identity) + 6 actions
-        vals = [i, 0, 0, 1, 0, 0, 0, i, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        # player moves +X (10/frame) facing +X; quat identity; zero actions (UE writes raw)
+        vals = [10 * i, 0, 0, 1, 0, 0, 0, 10 * i, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         rows.append(f"{i},{i / cfg['fps']},frames/{i:06d}.png,"
                     + ",".join(str(v) for v in vals))
     (out / "steps.csv").write_text(_HEADER + "\n" + "\n".join(rows) + "\n")
@@ -51,6 +51,8 @@ def test_ue_capture_wiring(tmp_path, monkeypatch):
     assert len(ep) == 8
     assert ep.meta.source.value == "ue" and ep.meta.viewpoint.value == "fpv"
     assert ep.meta.coord_frame.value == "ue_left_cm"
+    # actions inferred from pose deltas (forward motion facing +X) — not the raw zeros
+    assert ep.steps[0].action.forward == 1
     # render_config.json written with plan-derived fields
     assert captured["cfg"]["num_frames"] == 8 and captured["cfg"]["width"] == 64
     assert captured["cfg"]["viewpoint"] == "fpv"

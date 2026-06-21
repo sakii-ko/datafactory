@@ -7,8 +7,9 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from ..action import infer_actions
 from ..schema import Episode
-from ..writers import read_episode
+from ..writers import read_episode, write_episode
 from .base import BackendStatus, CaptureBackend, EpisodePlan, JobSpec, default_plan
 
 DEFAULT_UE_ROOT = "/root/nas/bigdata1/cjw/UnrealEngine_5.5.4"
@@ -22,6 +23,8 @@ class UEConfig:
     map_name: str = os.environ.get("DATAFARM_UE_MAP", "/Game/Maps/Capture")
     warmup_frames: int = 6
     orbit_test: bool = True   # placeholder camera motion until the P7 agent drives the pawn
+    infer_actions: bool = True   # derive WSAD labels from pose deltas (M-G3 §4.2)
+    action_deadzone: float = 1.0  # cm/frame; UE_LEFT_CM units
     timeout_s: int = 1800
 
     @property
@@ -73,7 +76,17 @@ class UEBackend(CaptureBackend):
         subprocess.run(args, check=True, capture_output=True, timeout=self.cfg.timeout_s)
         if not (out_dir / "steps.csv").exists():
             raise RuntimeError(f"UE capture produced no steps.csv in {out_dir}")
-        return read_episode(out_dir)
+        ep = read_episode(out_dir)
+        if self.cfg.infer_actions and len(ep) > 1:
+            acts = infer_actions(
+                [s.player_pose for s in ep.steps],
+                [s.camera_pose for s in ep.steps],
+                deadzone=self.cfg.action_deadzone,
+            )
+            for s, a in zip(ep.steps, acts):
+                s.action = a
+            write_episode(ep, out_dir.parent)  # rewrite steps.csv with inferred labels
+        return ep
 
     def healthcheck(self) -> BackendStatus:
         issues = []
