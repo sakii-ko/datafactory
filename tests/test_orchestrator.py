@@ -58,6 +58,18 @@ def test_run_job_failures_counted(tmp_path):
     assert b.calls == 4  # 2 episodes * (1 try + 1 retry)
 
 
+def test_run_job_concurrent(tmp_path):
+    rep = run_job(_job(out_root=str(tmp_path), num_episodes=6), MockBackend(), workers=3)
+    assert rep.total == 6 and rep.kept == 6 and rep.failed == 0
+    lines = (Path(rep.out_root) / "index.jsonl").read_text().strip().splitlines()
+    assert len(lines) == 6
+
+
+def test_run_job_concurrent_with_gpus(tmp_path):
+    rep = run_job(_job(out_root=str(tmp_path), num_episodes=4), MockBackend(), gpus=[0, 1], workers=2)
+    assert rep.kept == 4
+
+
 def test_gpu_env():
     assert gpu_env(None) == {}
     assert gpu_env(3) == {"CUDA_VISIBLE_DEVICES": "3"}

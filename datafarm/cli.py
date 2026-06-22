@@ -36,6 +36,7 @@ def main(argv=None) -> int:
     r.add_argument("--seed", type=int, default=0)
     r.add_argument("--out", default="runs")
     r.add_argument("--gpus", default="")
+    r.add_argument("--workers", type=int, default=1)
 
     h = sub.add_parser("healthcheck", help="check a backend's readiness")
     h.add_argument("--backend", default="ue")
@@ -55,7 +56,7 @@ def main(argv=None) -> int:
         seed=args.seed, out_root=args.out,
     )
     gpus = [int(x) for x in args.gpus.split(",")] if args.gpus else None
-    rep = run_job(job, _backend(args.backend), gpus=gpus)
+    rep = run_job(job, _backend(args.backend), gpus=gpus, workers=args.workers)
     print(json.dumps(asdict(rep), indent=2))
     return 0
 
