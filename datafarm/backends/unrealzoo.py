@@ -39,7 +39,12 @@ class UnrealZooConfig:
     turn_jitter: float = 7.0     # per-step heading wander (deg) before clamp
     nav_radius: float = 8000.0   # navmesh start-goal sampling radius
     scene_load_wait: float = 12.0  # seconds to wait after vset .../level for the map to stream in
-    warmup_steps: int = 14       # discarded forward steps to let auto-exposure settle before recording
+    warmup_steps: int = 6        # discarded forward steps before recording
+    # console vars applied after connect: stop auto-exposure (eye adaptation) blowing out bright views
+    exposure_cmds: tuple[str, ...] = (
+        "vrun r.EyeAdaptationQuality 0",
+        "vrun r.EyeAdaptation.MethodOverride 2",
+    )
     action_deadzone: float = 0.01  # m/frame, in CANON_RH_M
 
 
@@ -136,6 +141,8 @@ class UnrealZooBackend(CaptureBackend):
         from ..writers import write_episode
 
         c = self._connect()
+        for cmd in self.cfg.exposure_cmds:
+            self._req(c, cmd)
         rng = np.random.default_rng(plan.seed)
         agent = self.cfg.mode == "agent"
         if agent and not self._agent_ready:
