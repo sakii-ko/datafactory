@@ -24,6 +24,7 @@
 #include "Components/SkyAtmosphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Math/RandomStream.h"
 #include "ExplorerCharacter.h"
 
 ATickCaptureManager::ATickCaptureManager()
@@ -51,7 +52,7 @@ void ATickCaptureManager::BeginPlay()
 	}
 	SaveCounter = MakeShared<FThreadSafeCounter, ESPMode::ThreadSafe>();
 	RenderTarget = NewObject<UTextureRenderTarget2D>(this);
-	RenderTarget->ClearColor = FLinearColor::Black;
+	RenderTarget->ClearColor = FLinearColor(0.45f, 0.65f, 0.95f);  // sky blue where no geometry
 	RenderTarget->bAutoGenerateMips = false;
 	RenderTarget->InitCustomFormat(Cfg.Width, Cfg.Height, PF_B8G8R8A8, false);
 	RenderTarget->UpdateResourceImmediate(true);
@@ -60,6 +61,12 @@ void ATickCaptureManager::BeginPlay()
 	SceneCapture->bCaptureEveryFrame = false;
 	SceneCapture->bCaptureOnMovement = false;
 	SceneCapture->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+	// Lock exposure (disable eye-adaptation): min==max so the floor doesn't blow out
+	// against the dark background and brightness is stable across frames.
+	SceneCapture->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
+	SceneCapture->PostProcessSettings.AutoExposureMinBrightness = 1.0f;
+	SceneCapture->PostProcessSettings.bOverride_AutoExposureMaxBrightness = true;
+	SceneCapture->PostProcessSettings.AutoExposureMaxBrightness = 1.0f;
 
 	if (Cfg.bOrbitTest || Cfg.bAgentMode)
 	{
@@ -206,24 +213,23 @@ void ATickCaptureManager::SpawnTestScene()
 	if (!W) return;
 	FActorSpawnParameters SP;
 
-	if (ADirectionalLight* Sun = W->SpawnActor<ADirectionalLight>(FVector(0, 0, 1000), FRotator(-45, 45, 0), SP))
+	auto SpawnSun = [&](const FRotator& Rot, float Intensity)
 	{
-		if (auto* L = Cast<UDirectionalLightComponent>(Sun->GetLightComponent()))
+		if (ADirectionalLight* L = W->SpawnActor<ADirectionalLight>(FVector(0, 0, 1000), Rot, SP))
 		{
-			L->SetMobility(EComponentMobility::Movable);
-			L->SetIntensity(6.f);
-			L->SetAtmosphereSunLight(true);
+			if (auto* C = Cast<UDirectionalLightComponent>(L->GetLightComponent()))
+			{
+				C->SetMobility(EComponentMobility::Movable);
+				C->SetIntensity(Intensity);
+			}
 		}
-	}
-	W->SpawnActor<ASkyAtmosphere>(FVector::ZeroVector, FRotator::ZeroRotator, SP);
-	if (ASkyLight* Sky = W->SpawnActor<ASkyLight>(FVector(0, 0, 500), FRotator::ZeroRotator, SP))
-	{
-		Sky->GetLightComponent()->SetMobility(EComponentMobility::Movable);
-		Sky->GetLightComponent()->SetIntensity(1.f);
-	}
+	};
+	SpawnSun(FRotator(-50, 40, 0), 4.f);   // key
+	SpawnSun(FRotator(-20, -150, 0), 1.5f);  // fill (no pure-black shadows; no SkyAtmosphere)
 
 	UStaticMesh* Plane = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Plane.Plane"));
 	UStaticMesh* Cube = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+	UStaticMesh* Cyl = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
 	auto SpawnMesh = [&](UStaticMesh* M, const FVector& Loc, const FVector& Scale)
 	{
 		if (!M) return;
@@ -234,10 +240,15 @@ void ATickCaptureManager::SpawnTestScene()
 		A->SetActorScale3D(Scale);
 	};
 	SpawnMesh(Plane, FVector(0, 0, 0), FVector(80, 80, 1));
-	const FVector Cubes[] = {{400, 0, 100}, {0, 400, 100}, {-400, 0, 100}, {0, -400, 100}, {300, 300, 100}};
-	for (const FVector& P : Cubes)
+	// scatter varied props (deterministic) for visual reference + parallax
+	FRandomStream Rng(Cfg.Seed * 977 + 13);
+	for (int32 i = 0; i < 18; ++i)
 	{
-		SpawnMesh(Cube, P, FVector(2, 2, 2));
+		const float a = Rng.FRandRange(-PI, PI), r = Rng.FRandRange(250.f, Cfg.AgentBounds);
+		const float h = Rng.FRandRange(1.f, 4.f);
+		SpawnMesh(Rng.FRand() < 0.5f ? Cube : Cyl,
+			FVector(r * FMath::Cos(a), r * FMath::Sin(a), h * 50.f),
+			FVector(Rng.FRandRange(1.f, 2.5f), Rng.FRandRange(1.f, 2.5f), h));
 	}
 	UE_LOG(LogTemp, Display, TEXT("TickCapture: spawned runtime test scene."));
 }
