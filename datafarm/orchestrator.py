@@ -68,7 +68,7 @@ def run_job(
             continue
         frames = [s.rgb.array for s in ep.steps] if all(s.rgb.has_data for s in ep.steps) else None
         qa = assess(ep, frames=frames, cfg=qa_cfg)
-        meta = ep.meta.to_dict() | {"num_steps": len(ep.steps), "qa": qa}
+        meta = {**ep.meta.to_dict(), "num_steps": len(ep.steps), "qa": qa}
         if qa["kept"]:
             kept_metas.append(meta)
         else:

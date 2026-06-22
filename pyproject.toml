@@ -2,11 +2,12 @@
 name = "datafarm"
 version = "0.0.1"
 description = "World-model data farm: batch generation of action-labeled FPV/TPV video, Matrix-Game-3.0 style."
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
     "numpy>=1.26",
     "pillow>=10.0",
     "jsonschema>=4.0",
+    "tomli>=2.0; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]

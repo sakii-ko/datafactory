@@ -88,11 +88,11 @@ class Step:
     def to_row(self) -> dict:
         pp, cp = self.player_pose, self.camera_pose
         row = {"index": self.index, "t": self.t, "rgb": self.rgb.path}
-        row |= {f"player_{a}": float(v) for a, v in zip("xyz", pp.position)}
-        row |= {f"player_q{a}": float(v) for a, v in zip("wxyz", pp.rotation)}
-        row |= {f"cam_{a}": float(v) for a, v in zip("xyz", cp.position)}
-        row |= {f"cam_q{a}": float(v) for a, v in zip("wxyz", cp.rotation)}
-        row |= {k: int(v) for k, v in zip(ACTION_KEYS, self.action.keys)}
+        row.update({f"player_{a}": float(v) for a, v in zip("xyz", pp.position)})
+        row.update({f"player_q{a}": float(v) for a, v in zip("wxyz", pp.rotation)})
+        row.update({f"cam_{a}": float(v) for a, v in zip("xyz", cp.position)})
+        row.update({f"cam_q{a}": float(v) for a, v in zip("wxyz", cp.rotation)})
+        row.update({k: int(v) for k, v in zip(ACTION_KEYS, self.action.keys)})
         if self.depth:
             row["depth"] = self.depth.path
         if self.seg:

@@ -79,7 +79,7 @@ def write_episode(ep: Episode, out_root: Path, video: bool = False, codec: str =
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
         w.writerows(rows)
-    manifest.write_meta(d / "meta.json", ep.meta.to_dict() | {"num_steps": len(ep.steps)})
+    manifest.write_meta(d / "meta.json", {**ep.meta.to_dict(), "num_steps": len(ep.steps)})
     if video:
         encode_video(d / "frames", d / "video.mp4", ep.meta.fps, codec)
     return d
