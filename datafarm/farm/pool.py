@@ -44,8 +44,11 @@ class UEProcess:
         ini.write_text(f"[UnrealCV.Core]\nPort={self.port}\nWidth=1280\nHeight=720\nFOV=90\n")
         self._log = open(self.log_path, "ab") if self.log_path else None   # noqa: SIM115
         out = self._log or subprocess.DEVNULL
+        # xvfb avoids the Vulkan GPU-benchmark SIGSEGV; -RenderOffScreen avoids the per-window
+        # swapchain that hangs the 2nd+ instance ("PixelFormat not supported by this swapchain").
         cmd = ["xvfb-run", "-a", "-s", f"-screen 0 {self.screen}",
-               self.launcher, "-nosound", "-unattended", f"-graphicsadapter={self.adapter}"]
+               self.launcher, "-nosound", "-unattended", "-RenderOffScreen",
+               f"-graphicsadapter={self.adapter}"]
         self.proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=out,
                                      stderr=subprocess.STDOUT, start_new_session=True)
 
