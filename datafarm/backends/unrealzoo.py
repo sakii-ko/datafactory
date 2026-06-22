@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import json
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import numpy as np
@@ -40,6 +40,8 @@ class UnrealZooConfig:
     nav_radius: float = 8000.0   # navmesh start-goal sampling radius
     scene_load_wait: float = 12.0  # seconds to wait after vset .../level for the map to stream in
     warmup_steps: int = 6        # discarded forward steps before recording
+    req_timeout: float = 15.0    # per-request socket timeout (warm pool: bound, don't hang)
+    ready_timeout: float = 180.0  # max wait for the UnrealCV server after process launch
     # console vars applied after connect: stop auto-exposure (eye adaptation) blowing out bright views
     exposure_cmds: tuple[str, ...] = (
         "vrun r.EyeAdaptationQuality 0",
@@ -59,12 +61,15 @@ class UnrealZooBackend(CaptureBackend):
     the agent-less ExampleScene demo). Research-only content (Marketplace assets)."""
 
     name = "unrealzoo"
+    warm_pool = True
 
     def __init__(self, config: UnrealZooConfig | None = None):
         self.cfg = config or UnrealZooConfig()
         self._client = None
         self._eye = self.cfg.cam_id
         self._agent_ready = False
+        self._loaded_level = None
+        self._alive = lambda: True   # EnvPool overrides with the slot process liveness probe
 
     def _connect(self):
         from unrealcv import Client
@@ -76,15 +81,61 @@ class UnrealZooBackend(CaptureBackend):
         return self._client
 
     def _req(self, c, cmd: str):
-        r = c.request(cmd)
-        for _ in range(2):           # UnrealCV occasionally returns None; the gym retries similarly
+        from ..farm.pool import EnvCrashed
+        if not self._alive():
+            raise EnvCrashed(f"UE dead before '{cmd}'")
+        for _ in range(3):           # UnrealCV occasionally returns None; the gym retries similarly
+            try:
+                r = c.request(cmd, timeout=self.cfg.req_timeout)
+            except TypeError:        # unrealcv build may lack the timeout kwarg
+                r = c.request(cmd)
+            except Exception as e:   # noqa: BLE001
+                if not self._alive():
+                    raise EnvCrashed(str(e)) from e
+                r = None
             if r is not None:
-                break
-            r = c.request(cmd)
-        return r
+                return r
+            if not c.isconnected():
+                raise EnvCrashed(f"client lost connection on '{cmd}'")
+        if not self._alive():
+            raise EnvCrashed(f"UE died on '{cmd}'")
+        return None
 
     def plan(self, job: JobSpec) -> list[EpisodePlan]:
         return default_plan(job)
+
+    # ---- warm-pool hooks (one backend per EnvPool slot) ----
+    def for_slot(self, gpu: int | None, port: int) -> "UnrealZooBackend":
+        return UnrealZooBackend(replace(self.cfg, port=port))
+
+    def open(self, ready_timeout: float = 180.0) -> None:
+        from ..farm.pool import EnvCrashed
+        deadline, last = time.time() + ready_timeout, None
+        while time.time() < deadline:
+            if not self._alive():
+                raise EnvCrashed("UE process died during startup")
+            try:
+                if self._req(self._connect(), "vget /unrealcv/status"):
+                    return   # exposure_cmds are applied per-episode in capture() (covers the direct path too)
+            except Exception as e:   # noqa: BLE001 — not ready yet
+                last = e
+                self._client = None
+            time.sleep(2.0)
+        raise EnvCrashed(f"UnrealCV {self.cfg.host}:{self.cfg.port} not ready in {ready_timeout}s ({last})")
+
+    def alive(self) -> bool:
+        try:
+            return bool(self._req(self._connect(), "vget /unrealcv/status"))
+        except Exception:   # noqa: BLE001
+            return False
+
+    def close(self) -> None:
+        try:
+            if self._client:
+                self._client.disconnect()
+        except Exception:   # noqa: BLE001
+            pass
+        self._client = None
 
     # ---- agent (BP_Character) helpers ----
     def _camera_ids(self, c) -> list[int]:
@@ -145,11 +196,17 @@ class UnrealZooBackend(CaptureBackend):
             self._req(c, cmd)
         rng = np.random.default_rng(plan.seed)
         agent = self.cfg.mode == "agent"
-        if agent and not self._agent_ready:
-            if plan.map:                       # load the UnrealZoo scene (env_name) before spawning
-                self._req(c, f"vset /action/game/level {plan.map}")
-                time.sleep(self.cfg.scene_load_wait)
-            self._setup_agent(c)
+        if agent:
+            need = (not self._agent_ready) or (plan.map and plan.map != self._loaded_level)
+            if need:
+                if plan.map and plan.map != self._loaded_level:   # load scene only on change (warm reuse)
+                    self._req(c, f"vset /action/game/level {plan.map}")
+                    time.sleep(self.cfg.scene_load_wait)
+                    self._loaded_level = plan.map
+                    self._agent_ready = False
+                self._setup_agent(c)
+            else:
+                self._nav_start(c, self.cfg.agent_name)   # warm reuse: re-randomise the start each episode
         name, eye = self.cfg.agent_name, self._eye
 
         if not agent:                            # free-camera anchor (demo scene)

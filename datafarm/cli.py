@@ -44,6 +44,9 @@ def main(argv=None) -> int:
     r.add_argument("--workers", type=int, default=1)
     r.add_argument("--scenes", default="", help="comma-separated scene ids from the content catalog")
     r.add_argument("--content", default=str(_REPO / "content"), help="content catalog dir")
+    r.add_argument("--binary", default="", help="UnrealZoo launcher .sh path (warm-pool fan-out)")
+    r.add_argument("--envs", type=int, default=0, help="warm envs for fan-out; 0 => len(gpus)")
+    r.add_argument("--ready-timeout", type=float, default=180.0)
 
     h = sub.add_parser("healthcheck", help="check a backend's readiness")
     h.add_argument("--backend", default="ue")
@@ -72,7 +75,14 @@ def main(argv=None) -> int:
         seed=args.seed, out_root=args.out, scene_specs=scene_specs,
     )
     gpus = [int(x) for x in args.gpus.split(",")] if args.gpus else None
-    rep = run_job(job, _backend(backend), gpus=gpus, workers=args.workers)
+    binary = args.binary or (scene_specs[0].params.get("binary", "") if scene_specs else "")
+    workers = args.workers
+    if backend == "unrealzoo" and gpus:        # --gpus (vulkan adapter indices) => warm-pool fan-out
+        if not binary:
+            p.error("--binary (UnrealZoo launcher .sh) is required for fan-out with --gpus")
+        workers = args.envs or len(gpus)
+    rep = run_job(job, _backend(backend), gpus=gpus, workers=workers,
+                  binary=binary, ready_timeout=args.ready_timeout)
     print(json.dumps(asdict(rep), indent=2))
     return 0
 

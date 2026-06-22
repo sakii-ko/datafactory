@@ -41,10 +41,16 @@ def run_job(
     gpus: list[int] | None = None,
     retries: int = 1,
     workers: int = 1,
+    binary: str | None = None,
+    ready_timeout: float = 180.0,
 ) -> RunReport:
     out_root = Path(job.out_root) / job.name
     out_root.mkdir(parents=True, exist_ok=True)
     plans = backend.plan(job)
+
+    if getattr(backend, "warm_pool", False) and gpus:   # multi-instance fan-out (UnrealZoo)
+        return _run_warmpool(backend, plans, out_root, qa_cfg, gpus, workers,
+                             binary, ready_timeout, retries)
 
     def gpu_for(i: int) -> int | None:
         return gpus[i % len(gpus)] if gpus else None
@@ -65,21 +71,50 @@ def run_job(
             failed.append(plan.episode_id)
             errors.append({"episode_id": plan.episode_id, "error": str(err)[:800]})
             print(f"[datafarm] episode {plan.episode_id} failed: {err}", file=sys.stderr)
-            continue
-        frames = [s.rgb.array for s in ep.steps] if all(s.rgb.has_data for s in ep.steps) else None
-        qa = assess(ep, frames=frames, cfg=qa_cfg)
-        meta = {**ep.meta.to_dict(), "num_steps": len(ep.steps), "qa": qa}
-        if qa["kept"]:
-            kept_metas.append(meta)
         else:
-            dropped.append(plan.episode_id)
-            src, dst = out_root / plan.episode_id, out_root / "quarantine" / plan.episode_id
-            if src.exists():
-                dst.parent.mkdir(parents=True, exist_ok=True)
-                if dst.exists():
-                    shutil.rmtree(dst)
-                shutil.move(str(src), str(dst))
+            _grade(ep, out_root, qa_cfg, kept_metas, dropped)
 
     summary = write_dataset_index(out_root / "index.jsonl", kept_metas) if kept_metas else {"buckets": {}}
     return RunReport(str(out_root), len(plans), len(kept_metas), len(dropped),
+                     len(failed), summary["buckets"], dropped, failed, errors)
+
+
+def _grade(ep, out_root: Path, qa_cfg: QAConfig, kept_metas: list, dropped: list) -> None:
+    frames = [s.rgb.array for s in ep.steps] if all(s.rgb.has_data for s in ep.steps) else None
+    qa = assess(ep, frames=frames, cfg=qa_cfg)
+    if qa["kept"]:
+        kept_metas.append({**ep.meta.to_dict(), "num_steps": len(ep.steps), "qa": qa})
+        return
+    eid = ep.meta.episode_id
+    dropped.append(eid)
+    src, dst = out_root / eid, out_root / "quarantine" / eid
+    if src.exists():
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if dst.exists():
+            shutil.rmtree(dst)
+        shutil.move(str(src), str(dst))
+
+
+def _run_warmpool(proto, plans, out_root, qa_cfg, gpus, workers,
+                  binary, ready_timeout, retries) -> RunReport:
+    from .farm.pool import EnvPool
+    n = min(workers or len(gpus), len(plans)) or 1
+    pool = EnvPool(plans, proto, binary, gpus, n, out_root,
+                   ready_timeout=ready_timeout, max_retries=retries + 1)
+    pool.start()
+    kept, dropped, failed, errors, seen, total = [], [], [], [], 0, len(plans)
+    try:
+        while seen < total:
+            res = pool.results.get()
+            seen += 1
+            if res.episode is None:
+                failed.append(res.plan.episode_id)
+                errors.append({"episode_id": res.plan.episode_id, "error": (res.error or "")[:800]})
+                print(f"[datafarm] episode {res.plan.episode_id} failed: {res.error}", file=sys.stderr)
+            else:
+                _grade(res.episode, out_root, qa_cfg, kept, dropped)
+    finally:
+        pool.shutdown()
+    summary = write_dataset_index(out_root / "index.jsonl", kept) if kept else {"buckets": {}}
+    return RunReport(str(out_root), total, len(kept), len(dropped),
                      len(failed), summary["buckets"], dropped, failed, errors)

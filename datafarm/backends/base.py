@@ -71,6 +71,7 @@ def default_plan(job: JobSpec) -> list[EpisodePlan]:
 
 class CaptureBackend(ABC):
     name = "base"
+    warm_pool = False   # True => orchestrator drives this backend through a warm EnvPool (one per slot)
 
     @abstractmethod
     def plan(self, job: JobSpec) -> list[EpisodePlan]:
@@ -83,3 +84,16 @@ class CaptureBackend(ABC):
 
     def healthcheck(self) -> BackendStatus:
         return BackendStatus(True)
+
+    # --- warm-pool hooks (default: stateless backend, one shared instance) ---
+    def for_slot(self, gpu: int | None, port: int) -> "CaptureBackend":
+        return self
+
+    def open(self, ready_timeout: float = 180.0) -> None:
+        ...
+
+    def alive(self) -> bool:
+        return True
+
+    def close(self) -> None:
+        ...
