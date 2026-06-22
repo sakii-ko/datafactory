@@ -27,11 +27,20 @@ viewpoints = ["fpv"]
 license = "research-only"
 tags = ["unrealzoo", "outdoor", "industrial"]   # the UE5 ExampleScene package default map
 
-# add more as validated, e.g. the UE5.6 full package's named maps:
-# [[scene]]
-# id = "uz_greek_island"
-# backend = "unrealzoo"
-# map = "Greek_Island"          # loaded via UnrealCV `vset /action/game/level`
-# viewpoints = ["fpv", "tpv"]
-# license = "research-only"
-# tags = ["outdoor", "landscape"]
+# Full UE5.6 package scenes (agent mode): `map` = the UnrealZoo env_name, loaded via
+# `vset /action/game/level <map>` before the BP_Character is spawned and walked.
+[[scene]]
+id = "uz_containeryard"
+backend = "unrealzoo"
+map = "ContainerYard_Day"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "outdoor", "industrial"]
+
+[[scene]]
+id = "uz_downtown"
+backend = "unrealzoo"
+map = "DowntownWest"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "urban"]

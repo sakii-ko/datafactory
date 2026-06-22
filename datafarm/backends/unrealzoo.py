@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -37,6 +38,8 @@ class UnrealZooConfig:
     turn_max: float = 30.0       # set_move yaw input range [-30, 30] (deg)
     turn_jitter: float = 7.0     # per-step heading wander (deg) before clamp
     nav_radius: float = 8000.0   # navmesh start-goal sampling radius
+    scene_load_wait: float = 12.0  # seconds to wait after vset .../level for the map to stream in
+    warmup_steps: int = 14       # discarded forward steps to let auto-exposure settle before recording
     action_deadzone: float = 0.01  # m/frame, in CANON_RH_M
 
 
@@ -136,12 +139,20 @@ class UnrealZooBackend(CaptureBackend):
         rng = np.random.default_rng(plan.seed)
         agent = self.cfg.mode == "agent"
         if agent and not self._agent_ready:
+            if plan.map:                       # load the UnrealZoo scene (env_name) before spawning
+                self._req(c, f"vset /action/game/level {plan.map}")
+                time.sleep(self.cfg.scene_load_wait)
             self._setup_agent(c)
         name, eye = self.cfg.agent_name, self._eye
 
         if not agent:                            # free-camera anchor (demo scene)
             loc = np.array([float(x) for x in self._req(c, f"vget /camera/{eye}/location").split()])
             yaw = np.deg2rad(float(self._req(c, f"vget /camera/{eye}/rotation").split()[1]))
+
+        if agent and self.cfg.warmup_steps:     # walk a few discarded steps so auto-exposure settles
+            for _ in range(self.cfg.warmup_steps):
+                self._req(c, f"vbp {name} set_move 0 {self.cfg.linear:.1f}")
+                self._req(c, f"vget /camera/{eye}/lit png")
 
         steps = []
         v_ang = 0.0
