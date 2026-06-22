@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -25,10 +26,18 @@ from .base import BackendStatus, CaptureBackend, EpisodePlan, JobSpec, default_p
 class UnrealZooConfig:
     host: str = "127.0.0.1"
     port: int = 9000
-    cam_id: int = 0
-    speed: float = 60.0          # cm/step forward
-    yaw_jitter: float = 0.06     # rad/step heading wander
-    action_deadzone: float = 0.01  # m/frame (poses normalized to CANON_RH_M before inference)
+    mode: str = "agent"          # "agent" = spawn a walking BP_Character (full package);
+    #                              "camera" = drive a free camera (demo ExampleScene)
+    cam_id: int = 0              # camera mode: which camera to drive
+    agent_bp: str = "/Game/SmartLocomotion/Blueprints/BP_Character.BP_Character_C"
+    agent_name: str = "df_agent"
+    eye_offset: tuple[float, float, float] = (20.0, 0.0, 0.0)   # eye 20cm forward of pawn
+    speed: float = 200.0         # set_speed cap (cm/s)
+    linear: float = 100.0        # set_move forward throttle [-100, 100]
+    turn_max: float = 30.0       # set_move yaw input range [-30, 30] (deg)
+    turn_jitter: float = 7.0     # per-step heading wander (deg) before clamp
+    nav_radius: float = 8000.0   # navmesh start-goal sampling radius
+    action_deadzone: float = 0.01  # m/frame, in CANON_RH_M
 
 
 def _yaw_quat(yaw: float) -> np.ndarray:
@@ -36,16 +45,18 @@ def _yaw_quat(yaw: float) -> np.ndarray:
 
 
 class UnrealZooBackend(CaptureBackend):
-    """Capture from a running UnrealZoo env (its scene binary + baked-in UnrealCV server,
-    launched headless via scripts/unrealzoo_launch.sh). Drives the camera on a forward-wander
-    flythrough and grabs RGB + pose per step. Research-only content (purchased UE Marketplace
-    assets, packaged binaries — do not redistribute / not for a shipped commercial model)."""
+    """Capture from a running UnrealZoo env (scene binary + baked-in UnrealCV server, launched
+    headless via scripts/unrealzoo_launch.sh). Default mode spawns a BP_Character and walks it
+    (collision-aware) for embodied FPV navigation data; camera mode drives a free camera (for
+    the agent-less ExampleScene demo). Research-only content (Marketplace assets)."""
 
     name = "unrealzoo"
 
     def __init__(self, config: UnrealZooConfig | None = None):
         self.cfg = config or UnrealZooConfig()
         self._client = None
+        self._eye = self.cfg.cam_id
+        self._agent_ready = False
 
     def _connect(self):
         from unrealcv import Client
@@ -56,32 +67,101 @@ class UnrealZooBackend(CaptureBackend):
                 raise RuntimeError(f"cannot connect to UnrealCV {self.cfg.host}:{self.cfg.port}")
         return self._client
 
+    def _req(self, c, cmd: str):
+        r = c.request(cmd)
+        for _ in range(2):           # UnrealCV occasionally returns None; the gym retries similarly
+            if r is not None:
+                break
+            r = c.request(cmd)
+        return r
+
     def plan(self, job: JobSpec) -> list[EpisodePlan]:
         return default_plan(job)
 
-    def _location(self, c) -> np.ndarray:
-        return np.array([float(x) for x in c.request(f"vget /camera/{self.cfg.cam_id}/location").split()])
+    # ---- agent (BP_Character) helpers ----
+    def _camera_ids(self, c) -> list[int]:
+        ids = []
+        for i in range(32):
+            r = self._req(c, f"vget /camera/{i}/location")
+            if not r or "error" in str(r).lower():
+                break
+            ids.append(i)
+        return ids
 
-    def _yaw(self, c) -> float:
-        return float(c.request(f"vget /camera/{self.cfg.cam_id}/rotation").split()[1])  # pitch yaw roll
+    def _agent_loc(self, c, name) -> np.ndarray:
+        return np.array([float(x) for x in self._req(c, f"vget /object/{name}/location").split()])
 
+    def _nav_start(self, c, name) -> None:
+        r = self._req(c, f"vbp {name} generate_nav_goal {self.cfg.nav_radius:.0f} 0")
+        try:
+            g = json.loads(r).get("nav_goal", "")
+            xyz = [float(p.split("=")[1]) for p in g.split() if "=" in p]
+            if len(xyz) == 3:
+                self._req(c, f"vset /object/{name}/location {xyz[0]:.1f} {xyz[1]:.1f} {xyz[2]:.1f}")
+        except (json.JSONDecodeError, TypeError, ValueError, AttributeError):
+            pass  # keep the spawn location if navmesh sampling is unavailable
+
+    def _setup_agent(self, c) -> None:
+        n = self.cfg.agent_name
+        before = set(self._camera_ids(c))
+        self._req(c, f"vset /objects/spawn_from_path {self.cfg.agent_bp} {n}")
+        self._req(c, f"vbp {n} set_phy 0")
+        ex, ey, ez = self.cfg.eye_offset
+        self._req(c, f"vbp {n} set_cam {ex} {ey} {ez} 0 0 0")
+        self._req(c, f"vbp {n} set_speed {self.cfg.speed}")
+        self._nav_start(c, n)
+        after = self._camera_ids(c)
+        new = [i for i in after if i not in before]
+        if new:                                  # the pawn's auto-created camera
+            self._eye = new[0]
+        else:                                    # else the camera nearest the pawn
+            loc = self._agent_loc(c, n)
+            cams = [(np.linalg.norm(np.array([float(x) for x in
+                     self._req(c, f"vget /camera/{i}/location").split()]) - loc), i)
+                    for i in after if i != 0]
+            self._eye = min(cams)[1] if cams else self.cfg.cam_id
+        self._agent_ready = True
+
+    def _hit(self, c, name) -> bool:
+        r = self._req(c, f"vbp {name} get_hit")
+        return "1" in str(r) or "true" in str(r).lower()
+
+    # ---- capture ----
     def capture(self, plan: EpisodePlan, out_root: Path, gpu: int | None = None) -> Episode:
         from PIL import Image
+
         from ..writers import write_episode
 
         c = self._connect()
         rng = np.random.default_rng(plan.seed)
-        cam = self.cfg.cam_id
-        loc = self._location(c)
-        yaw = np.deg2rad(self._yaw(c))
+        agent = self.cfg.mode == "agent"
+        if agent and not self._agent_ready:
+            self._setup_agent(c)
+        name, eye = self.cfg.agent_name, self._eye
+
+        if not agent:                            # free-camera anchor (demo scene)
+            loc = np.array([float(x) for x in self._req(c, f"vget /camera/{eye}/location").split()])
+            yaw = np.deg2rad(float(self._req(c, f"vget /camera/{eye}/rotation").split()[1]))
 
         steps = []
+        v_ang = 0.0
         for i in range(plan.steps):
-            yaw += float(rng.normal(0, self.cfg.yaw_jitter))
-            loc = loc + self.cfg.speed * np.array([np.cos(yaw), np.sin(yaw), 0.0])
-            c.request(f"vset /camera/{cam}/location {loc[0]:.2f} {loc[1]:.2f} {loc[2]:.2f}")
-            c.request(f"vset /camera/{cam}/rotation 0 {np.rad2deg(yaw):.2f} 0")
-            png = c.request(f"vget /camera/{cam}/lit png")
+            if agent:
+                hit = self._hit(c, name)
+                v_ang = (rng.choice([-1.0, 1.0]) * self.cfg.turn_max if hit
+                         else float(np.clip(v_ang + rng.normal(0, self.cfg.turn_jitter),
+                                            -self.cfg.turn_max, self.cfg.turn_max)))
+                v_lin = 0.0 if hit else self.cfg.linear
+                self._req(c, f"vbp {name} set_move {v_ang:.1f} {v_lin:.1f}")
+                png = self._req(c, f"vget /camera/{eye}/lit png")
+                loc = np.array([float(x) for x in self._req(c, f"vget /object/{name}/location").split()])
+                yaw = np.deg2rad(float(self._req(c, f"vget /object/{name}/rotation").split()[1]))
+            else:
+                yaw += float(rng.normal(0, 0.06))
+                loc = loc + 400.0 * np.array([np.cos(yaw), np.sin(yaw), 0.0])
+                self._req(c, f"vset /camera/{eye}/location {loc[0]:.2f} {loc[1]:.2f} {loc[2]:.2f}")
+                self._req(c, f"vset /camera/{eye}/rotation 0 {np.rad2deg(yaw):.2f} 0")
+                png = self._req(c, f"vget /camera/{eye}/lit png")
             arr = np.array(Image.open(io.BytesIO(png)).convert("RGB"))
             pose = Pose6DoF(loc.copy(), _yaw_quat(yaw), CoordFrame.UE_LEFT_CM)
             steps.append(Step(i, i / plan.fps, FrameRef(array=arr), pose, pose, Action.zero()))
@@ -95,12 +175,13 @@ class UnrealZooBackend(CaptureBackend):
             for s, a in zip(steps, acts):
                 s.action = a
 
-        h, w = (steps[0].rgb.array.shape[:2] if steps else (plan.resolution[1], plan.resolution[0]))
+        h, w = steps[0].rgb.array.shape[:2]
         meta = EpisodeMeta(
             episode_id=plan.episode_id, source=Source.UNREALZOO, viewpoint=Viewpoint.FPV,
             label_kind=LabelKind.PRECISE_ACTION, scene_id=plan.scene_id or plan.map,
             fps=plan.fps, resolution=(w, h), seed=plan.seed,
-            coord_frame=CoordFrame.UE_LEFT_CM, extra={"license": "research-only"},
+            coord_frame=CoordFrame.UE_LEFT_CM,
+            extra={"license": "research-only", "mode": self.cfg.mode},
         )
         ep = Episode(meta, steps)
         write_episode(ep, out_root)
@@ -109,7 +190,7 @@ class UnrealZooBackend(CaptureBackend):
     def healthcheck(self) -> BackendStatus:
         try:
             c = self._connect()
-            ok = bool(c.request("vget /unrealcv/status"))
-            return BackendStatus(ok, f"UnrealCV {self.cfg.host}:{self.cfg.port} ok" if ok else "no status")
+            ok = bool(self._req(c, "vget /unrealcv/status"))
+            return BackendStatus(ok, f"UnrealCV {self.cfg.host}:{self.cfg.port} ok")
         except Exception as e:  # noqa: BLE001
             return BackendStatus(False, f"UnrealCV not reachable: {e}")
