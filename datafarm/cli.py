@@ -3,14 +3,17 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import asdict
+from pathlib import Path
 
 from .backends.aaa import AAABackend
 from .backends.base import JobSpec
 from .backends.mock import MockBackend
 from .backends.video import VideoIngestBackend
 from .orchestrator import run_job
+from .scenes import SceneCatalog
 from .schema import Viewpoint
 
+_REPO = Path(__file__).resolve().parents[1]
 _BACKENDS = {"mock": MockBackend, "video": VideoIngestBackend, "aaa": AAABackend}
 
 
@@ -37,6 +40,8 @@ def main(argv=None) -> int:
     r.add_argument("--out", default="runs")
     r.add_argument("--gpus", default="")
     r.add_argument("--workers", type=int, default=1)
+    r.add_argument("--scenes", default="", help="comma-separated scene ids from the content catalog")
+    r.add_argument("--content", default=str(_REPO / "content"), help="content catalog dir")
 
     h = sub.add_parser("healthcheck", help="check a backend's readiness")
     h.add_argument("--backend", default="ue")
@@ -49,14 +54,23 @@ def main(argv=None) -> int:
         return 0 if st.ok else 1
 
     w, h = (int(x) for x in args.res.lower().split("x"))
+    backend = args.backend
+    scene_specs = ()
+    if args.scenes:
+        specs = SceneCatalog(args.content).resolve([s.strip() for s in args.scenes.split(",")])
+        backends = {s.backend for s in specs}
+        if len(backends) > 1:
+            p.error(f"--scenes span multiple backends {backends}; run one backend at a time")
+        backend = backends.pop()  # scene catalog drives the backend
+        scene_specs = tuple(specs)
     job = JobSpec(
-        name=args.name, backend=args.backend, num_episodes=args.episodes,
+        name=args.name, backend=backend, num_episodes=args.episodes,
         steps_per_episode=args.steps, fps=args.fps, resolution=(w, h),
         viewpoints=tuple(Viewpoint(v.strip().lower()) for v in args.viewpoints.split(",")),
-        seed=args.seed, out_root=args.out,
+        seed=args.seed, out_root=args.out, scene_specs=scene_specs,
     )
     gpus = [int(x) for x in args.gpus.split(",")] if args.gpus else None
-    rep = run_job(job, _backend(args.backend), gpus=gpus, workers=args.workers)
+    rep = run_job(job, _backend(backend), gpus=gpus, workers=args.workers)
     print(json.dumps(asdict(rep), indent=2))
     return 0
 

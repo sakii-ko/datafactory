@@ -39,7 +39,8 @@ def test_ue_capture_wiring(tmp_path, monkeypatch):
     def fake_run(args, **kw):
         cfg = json.loads(ue_mod.Path(args[2]).read_text())
         captured["cfg"] = cfg
-        captured["gpu"] = args[3] if len(args) > 3 else None
+        captured["map"] = args[3] if len(args) > 3 else None
+        captured["gpu"] = args[4] if len(args) > 4 else None
         _fake_ue(cfg)
         class R: returncode = 0
         return R()

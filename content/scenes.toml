@@ -1,0 +1,29 @@
+# Scene registry — the extensible content layer.
+# Add a scene = add one [[scene]] block here (or in any other content/*.toml). No code change.
+#   backend = "ue"        -> your own assembled .umap level (set `map`), captured by TickCapture
+#   backend = "unrealzoo" -> a UnrealZoo env binary by name (research-only), captured via UnrealCV
+#   backend = "mock"      -> synthetic, for testing the pipeline without an engine
+# Optional: viewpoints (fpv/tpv), license, tags, params (backend-specific).
+
+[[scene]]
+id = "mock"
+backend = "mock"
+viewpoints = ["tpv", "fpv"]
+license = "self"
+
+[[scene]]
+id = "df_testroom"
+backend = "ue"
+map = "/Game/Maps/Capture"
+viewpoints = ["fpv", "tpv"]
+license = "self"
+tags = ["placeholder", "primitives"]
+
+# --- UnrealZoo scenes (research-only; fill in as each is validated on the A6000 box) ---
+# [[scene]]
+# id = "uz_greek_island"
+# backend = "unrealzoo"
+# map = "Greek_Island"          # env/binary name in the UnrealZoo package
+# viewpoints = ["fpv", "tpv"]
+# license = "research-only"
+# tags = ["outdoor", "landscape"]

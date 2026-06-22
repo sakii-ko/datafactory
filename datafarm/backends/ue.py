@@ -80,7 +80,8 @@ class UEBackend(CaptureBackend):
         }
         cfg_path = out_dir / "render_config.json"
         cfg_path.write_text(json.dumps(cfg, indent=2))
-        args = ["bash", str(_REPO / "scripts" / "ue_capture.sh"), str(cfg_path)]
+        scene_map = plan.map or self.cfg.map_name
+        args = ["bash", str(_REPO / "scripts" / "ue_capture.sh"), str(cfg_path), scene_map]
         if gpu is not None:
             args.append(str(gpu))
         # Redirect to a file, NOT a pipe: UE forks UnrealTraceServer, which inherits the
