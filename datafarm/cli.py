@@ -8,13 +8,15 @@ from pathlib import Path
 from .backends.aaa import AAABackend
 from .backends.base import JobSpec
 from .backends.mock import MockBackend
+from .backends.unrealzoo import UnrealZooBackend
 from .backends.video import VideoIngestBackend
 from .orchestrator import run_job
 from .scenes import SceneCatalog
 from .schema import Viewpoint
 
 _REPO = Path(__file__).resolve().parents[1]
-_BACKENDS = {"mock": MockBackend, "video": VideoIngestBackend, "aaa": AAABackend}
+_BACKENDS = {"mock": MockBackend, "video": VideoIngestBackend, "aaa": AAABackend,
+             "unrealzoo": UnrealZooBackend}
 
 
 def _backend(name: str):

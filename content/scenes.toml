@@ -19,11 +19,19 @@ viewpoints = ["fpv", "tpv"]
 license = "self"
 tags = ["placeholder", "primitives"]
 
-# --- UnrealZoo scenes (research-only; fill in as each is validated on the A6000 box) ---
+# --- UnrealZoo scenes (research-only; run the env binary headless via scripts/unrealzoo_launch.sh) ---
+[[scene]]
+id = "uz_example"
+backend = "unrealzoo"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "outdoor", "industrial"]   # the UE5 ExampleScene package default map
+
+# add more as validated, e.g. the UE5.6 full package's named maps:
 # [[scene]]
 # id = "uz_greek_island"
 # backend = "unrealzoo"
-# map = "Greek_Island"          # env/binary name in the UnrealZoo package
+# map = "Greek_Island"          # loaded via UnrealCV `vset /action/game/level`
 # viewpoints = ["fpv", "tpv"]
 # license = "research-only"
 # tags = ["outdoor", "landscape"]

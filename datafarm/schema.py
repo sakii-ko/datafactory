@@ -24,6 +24,7 @@ class LabelKind(str, Enum):
 
 class Source(str, Enum):
     UE = "ue"
+    UNREALZOO = "unrealzoo"
     MOCK = "mock"
     VIDEO = "video"
     AAA = "aaa"
