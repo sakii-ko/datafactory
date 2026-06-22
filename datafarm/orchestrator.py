@@ -97,22 +97,35 @@ def _grade(ep, out_root: Path, qa_cfg: QAConfig, kept_metas: list, dropped: list
 
 def _run_warmpool(proto, plans, out_root, qa_cfg, gpus, workers,
                   binary, ready_timeout, retries) -> RunReport:
+    import queue as _queue
+
     from .farm.pool import EnvPool
     n = min(workers or len(gpus), len(plans)) or 1
     pool = EnvPool(plans, proto, binary, gpus, n, out_root,
                    ready_timeout=ready_timeout, max_retries=retries + 1)
-    pool.start()
-    kept, dropped, failed, errors, seen, total = [], [], [], [], 0, len(plans)
+    threads = pool.start()
+    kept, dropped, failed, errors, delivered, total = [], [], [], [], set(), len(plans)
     try:
-        while seen < total:
-            res = pool.results.get()
-            seen += 1
+        while len(delivered) < total:
+            try:
+                res = pool.results.get(timeout=5.0)
+            except _queue.Empty:
+                if not any(t.is_alive() for t in threads):
+                    break   # no live env left to make progress -> reconcile leftovers below
+                continue
+            if res.plan.episode_id in delivered:
+                continue   # defensive: one terminal result per plan
+            delivered.add(res.plan.episode_id)
             if res.episode is None:
                 failed.append(res.plan.episode_id)
                 errors.append({"episode_id": res.plan.episode_id, "error": (res.error or "")[:800]})
                 print(f"[datafarm] episode {res.plan.episode_id} failed: {res.error}", file=sys.stderr)
             else:
                 _grade(res.episode, out_root, qa_cfg, kept, dropped)
+        for p in plans:   # any plan stranded by dead envs -> failed
+            if p.episode_id not in delivered:
+                failed.append(p.episode_id)
+                errors.append({"episode_id": p.episode_id, "error": "no live env produced a result"})
     finally:
         pool.shutdown()
     summary = write_dataset_index(out_root / "index.jsonl", kept) if kept else {"buckets": {}}

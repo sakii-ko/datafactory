@@ -33,17 +33,21 @@ class UEProcess:
     adapter: int
     port: int
     screen: str = "1280x720x24"
+    log_path: str = ""
     proc: subprocess.Popen | None = None
+    _log: object = None
 
     def start(self) -> None:
         # The binary reads its port from unrealcv.ini next to the binary (else default 9000).
         ini = _ini_path(self.launcher)
         ini.parent.mkdir(parents=True, exist_ok=True)
         ini.write_text(f"[UnrealCV.Core]\nPort={self.port}\nWidth=1280\nHeight=720\nFOV=90\n")
+        self._log = open(self.log_path, "ab") if self.log_path else None   # noqa: SIM115
+        out = self._log or subprocess.DEVNULL
         cmd = ["xvfb-run", "-a", "-s", f"-screen 0 {self.screen}",
                self.launcher, "-nosound", "-unattended", f"-graphicsadapter={self.adapter}"]
-        self.proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                                     stderr=subprocess.DEVNULL, start_new_session=True)
+        self.proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=out,
+                                     stderr=subprocess.STDOUT, start_new_session=True)
 
     def is_running(self) -> bool:
         return self.proc is not None and self.proc.poll() is None
@@ -58,14 +62,18 @@ class UEProcess:
                 self.proc.wait(timeout=10)
             except subprocess.TimeoutExpired:
                 pass
+        if self._log:
+            self._log.close()
+            self._log = None
         self.proc = None
 
 
 class EnvSlot:
-    def __init__(self, idx, adapter, base_port, launcher, proto, ready_timeout, launch_lock):
+    def __init__(self, idx, adapter, base_port, launcher, proto, ready_timeout, launch_lock, log_dir):
         self.idx, self.adapter, self.base_port = idx, adapter, base_port
         self.launcher, self.proto, self.ready_timeout = launcher, proto, ready_timeout
         self.launch_lock = launch_lock
+        self.log_path = str(Path(log_dir) / f"slot{idx}.log")
         self._off = 0
         self.proc = None
         self.backend = None
@@ -79,7 +87,7 @@ class EnvSlot:
         # Serialize cold starts: all instances share one unrealcv.ini, so write-port -> start ->
         # wait-until-listening must be atomic per instance (the binary reads the ini at startup).
         with self.launch_lock:
-            self.proc = UEProcess(self.launcher, self.adapter, self.port)
+            self.proc = UEProcess(self.launcher, self.adapter, self.port, log_path=self.log_path)
             self.proc.start()
             self.backend = self.proto.for_slot(self.adapter, self.port)
             self.backend._alive = self.proc.is_running
@@ -159,19 +167,24 @@ class EnvPool:
         self.results = queue.Queue(maxsize=2 * n_envs)   # bounded -> backpressure on the QA consumer
         self.launcher, self.out_root = launcher, out_root
         self.proto, self.ready_timeout, self.max_retries = proto, ready_timeout, max_retries
+        self.log_dir = Path(out_root) / "_envs"
+        self.log_dir.mkdir(parents=True, exist_ok=True)
         self._stop = threading.Event()
         self._launch_lock = threading.Lock()
         self._slots = []
         self._threads = []
 
     def _cleanup(self) -> None:
-        subprocess.run(["pkill", "-9", "-f", Path(self.launcher).stem],
+        # Kill stale UE binaries from prior runs. Match the binary path ("<stem>/Binaries"), which the
+        # farm process's own cmdline lacks (it carries "--binary .../<stem>.sh") — avoids self-SIGKILL.
+        subprocess.run(["pkill", "-9", "-f", f"{Path(self.launcher).stem}/Binaries"],
                        stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         time.sleep(45)   # let the UnrealCV port TIME_WAIT clear before rebinding
 
     def _worker(self, idx):
         adapter, base = self.layout[idx]
-        slot = EnvSlot(idx, adapter, base, self.launcher, self.proto, self.ready_timeout, self._launch_lock)
+        slot = EnvSlot(idx, adapter, base, self.launcher, self.proto, self.ready_timeout,
+                       self._launch_lock, self.log_dir)
         self._slots.append(slot)
         try:
             slot.launch()
@@ -194,9 +207,8 @@ class EnvPool:
                         self.results.put(EpisodeResult(plan, None, f"crashed {att+1}x: {e}", att + 1))
                     try:
                         slot.relaunch()
-                    except Exception as re:
-                        self.results.put(EpisodeResult(plan, None, f"relaunch failed: {re}", att + 1))
-                        return
+                    except Exception:
+                        return   # plan already requeued/terminal above; don't double-count, just exit
                 except Exception as e:   # non-crash capture error: keep the env, report this plan
                     self.results.put(EpisodeResult(plan, None, str(e), att + 1))
         finally:
@@ -212,6 +224,11 @@ class EnvPool:
 
     def shutdown(self):
         self._stop.set()
+        try:
+            while True:
+                self.results.get_nowait()   # unblock any worker parked on a full results.put
+        except queue.Empty:
+            pass
         for s in list(self._slots):
             try:
                 s.teardown()
