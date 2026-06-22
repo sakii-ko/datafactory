@@ -3,11 +3,13 @@ from __future__ import annotations
 import ctypes.util
 import json
 import os
+import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
 from ..action import infer_actions
+from ..pose import CoordFrame
 from ..schema import Episode
 from ..writers import read_episode, write_episode
 from .base import BackendStatus, CaptureBackend, EpisodePlan, JobSpec, default_plan
@@ -19,14 +21,14 @@ _REPO = Path(__file__).resolve().parents[2]
 @dataclass
 class UEConfig:
     ue_root: str = os.environ.get("DATAFARM_UE_ROOT", DEFAULT_UE_ROOT)
-    project: str = str(_REPO / "ue/DataFarmCapture/DataFarmCapture.uproject")
+    project: str = os.environ.get("DATAFARM_UE_PROJECT", str(_REPO / "ue/DataFarmCapture/DataFarmCapture.uproject"))
     map_name: str = os.environ.get("DATAFARM_UE_MAP", "/Game/Maps/Capture")
     warmup_frames: int = 6
     agent_mode: bool = True   # P7 wandering ExplorerCharacter + follow camera (default real mode)
     agent_bounds: float = 1500.0
     orbit_test: bool = True   # placeholder camera motion (used when agent_mode is False)
     infer_actions: bool = True   # derive WSAD labels from pose deltas (M-G3 §4.2)
-    action_deadzone: float = 1.0  # cm/frame; UE_LEFT_CM units
+    action_deadzone: float = 0.01  # m/frame (~1cm); poses normalized to CANON_RH_M before inference
     timeout_s: int = 600
 
     @property
@@ -35,8 +37,9 @@ class UEConfig:
 
 
 def _vulkan_loader() -> str | None:
-    if ctypes.util.find_library("vulkan"):
-        return ctypes.util.find_library("vulkan")
+    lib = ctypes.util.find_library("vulkan")
+    if lib:
+        return lib
     for p in ("/lib/x86_64-linux-gnu/libvulkan.so.1", "/usr/lib/x86_64-linux-gnu/libvulkan.so.1"):
         if Path(p).exists():
             return p
@@ -44,8 +47,8 @@ def _vulkan_loader() -> str | None:
 
 
 class UEBackend(CaptureBackend):
-    """UE5 headless tick-synchronized capture (primary route). capture() wiring lands
-    in P8 once the TickCapture C++ plugin (P6) + content/agent (P7) exist."""
+    """UE5 headless tick-synchronized capture (primary route): write a render config,
+    launch the TickCapture-driven editor headless, read back the episode, infer actions."""
 
     name = "ue"
 
@@ -57,6 +60,9 @@ class UEBackend(CaptureBackend):
 
     def capture(self, plan: EpisodePlan, out_root: Path, gpu: int | None = None) -> Episode:
         out_dir = (Path(out_root) / plan.episode_id).resolve()
+        # Clear stale artifacts so the existence-based success check can't pass on a
+        # prior attempt's output if UE crashes before writing this run's frames.
+        shutil.rmtree(out_dir, ignore_errors=True)
         (out_dir / "frames").mkdir(parents=True, exist_ok=True)
         cfg = {
             "episode_id": plan.episode_id,
@@ -89,10 +95,14 @@ class UEBackend(CaptureBackend):
             raise RuntimeError(f"UE capture produced no steps.csv in {out_dir} "
                                f"(rc={proc.returncode})\n{tail}")
         ep = read_episode(out_dir)
+        if len(ep) != int(plan.steps):
+            raise RuntimeError(f"UE capture wrote {len(ep)} steps, expected {plan.steps} in {out_dir}")
         if self.cfg.infer_actions and len(ep) > 1:
+            # movement_keys assumes canonical RH (Y=left); UE poses are ue_left_cm (Y=right),
+            # so convert before inference or left/right labels invert.
             acts = infer_actions(
-                [s.player_pose for s in ep.steps],
-                [s.camera_pose for s in ep.steps],
+                [s.player_pose.to(CoordFrame.CANON_RH_M) for s in ep.steps],
+                [s.camera_pose.to(CoordFrame.CANON_RH_M) for s in ep.steps],
                 deadzone=self.cfg.action_deadzone,
             )
             for s, a in zip(ep.steps, acts):
@@ -106,6 +116,6 @@ class UEBackend(CaptureBackend):
             issues.append(f"UnrealEditor-Cmd missing at {self.cfg.editor_cmd}")
         if _vulkan_loader() is None:
             issues.append("libvulkan.so.1 not found (conda install -c conda-forge vulkan-loader)")
-        if not self.cfg.project:
-            issues.append("DATAFARM_UE_PROJECT unset (no .uproject yet — P7)")
+        if not Path(self.cfg.project).exists():
+            issues.append(f".uproject missing at {self.cfg.project} (set DATAFARM_UE_PROJECT)")
         return BackendStatus(not issues, "; ".join(issues) or f"UE ok at {self.cfg.ue_root}")

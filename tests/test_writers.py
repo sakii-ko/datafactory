@@ -3,7 +3,7 @@ import shutil
 import numpy as np
 import pytest
 
-from datafarm.schema import Action
+from datafarm.schema import Action, FrameRef
 from datafarm.writers import load_frame, pack_tar, read_episode, write_episode
 
 from .conftest import make_episode
@@ -36,6 +36,19 @@ def test_num_steps_in_meta(tmp_path):
     ep = make_episode(n=5)
     d = write_episode(ep, tmp_path)
     assert json.loads((d / "meta.json").read_text())["num_steps"] == 5
+
+
+def test_depth_seg_persisted(tmp_path):
+    ep = make_episode(n=3)
+    for s in ep.steps:
+        s.depth = FrameRef(array=(np.arange(64).reshape(8, 8) * 500).astype(np.uint16))
+        s.seg = FrameRef(array=np.ones((8, 8), np.uint8))
+    d = write_episode(ep, tmp_path)
+    assert (d / "depth" / "000000.png").exists() and (d / "seg" / "000000.png").exists()
+    depth_back = load_frame(d / "depth" / "000000.png")
+    assert depth_back.max() > 255  # 16-bit precision preserved (not uint8-clamped)
+    back = read_episode(d)
+    assert back.steps[0].depth.path == "depth/000000.png" and back.steps[0].seg.path == "seg/000000.png"
 
 
 def test_pack_tar(tmp_path):

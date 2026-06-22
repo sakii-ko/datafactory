@@ -36,7 +36,7 @@ def step_displacements(positions: np.ndarray) -> np.ndarray:
 def displacement_ratio(positions: np.ndarray) -> float:
     d = step_displacements(positions)
     med = float(np.median(d)) if len(d) else 0.0
-    return float(d.max() / med) if med > 0 else float("inf")
+    return float(d.max() / med) if med > 0 else 0.0  # degenerate (static) -> 0, caught by too_static
 
 
 def median_speed(positions: np.ndarray, fps: float) -> float:

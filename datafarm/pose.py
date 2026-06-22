@@ -85,6 +85,13 @@ class Pose6DoF:
         self.position = np.asarray(self.position, float).reshape(3)
         self.rotation = quat_normalize(self.rotation)
 
+    def __eq__(self, o):
+        return (isinstance(o, Pose6DoF) and self.frame == o.frame
+                and np.array_equal(self.position, o.position)
+                and np.array_equal(self.rotation, o.rotation))
+
+    __hash__ = None
+
     def matrix(self) -> np.ndarray:
         m = np.eye(4)
         m[:3, :3] = quat_to_matrix(self.rotation)

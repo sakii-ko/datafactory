@@ -25,6 +25,12 @@ def test_action_from_dict():
     assert a.to_list() == [1, 0, 0, 0, 1, 0]
 
 
+def test_action_equality_returns_bool():
+    assert (Action.zero() == Action.zero()) is True
+    assert (Action.from_dict({"forward": 1}) == Action.zero()) is False
+    assert Action.zero() != 5  # cross-type compare must not raise
+
+
 def test_step_to_row():
     s = Step(
         index=3,

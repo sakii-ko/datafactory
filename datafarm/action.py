@@ -5,9 +5,11 @@ import numpy as np
 from .pose import Pose6DoF
 from .schema import Action
 
-# WSAD inference: project XY position deltas onto the camera-local forward/right
-# axes and threshold into discrete keys (Matrix-Game-3.0 §4.2). Scale-invariant,
-# so monocular scale ambiguity does not affect the labels.
+# WSAD inference: project XY position deltas onto the camera-local forward/right axes
+# and threshold into discrete keys (Matrix-Game-3.0 §4.2). The movement *direction* is
+# scale-invariant, but the discrete labels are NOT — `deadzone` is applied in the poses'
+# native units, and left/right assume a right-handed Y-left frame. Pass poses in one
+# consistent frame (canonical) and scale the deadzone to those units.
 
 
 def movement_keys(delta_xy: np.ndarray, yaw: float, deadzone: float) -> np.ndarray:

@@ -24,10 +24,6 @@ class RunReport:
     errors: list = field(default_factory=list)
 
 
-def gpu_env(gpu: int | None) -> dict:
-    return {} if gpu is None else {"CUDA_VISIBLE_DEVICES": str(gpu)}
-
-
 def _capture(backend: CaptureBackend, plan: EpisodePlan, out_root: Path, gpu: int | None, retries: int):
     err = None
     for _ in range(retries + 1):
@@ -80,6 +76,8 @@ def run_job(
             src, dst = out_root / plan.episode_id, out_root / "quarantine" / plan.episode_id
             if src.exists():
                 dst.parent.mkdir(parents=True, exist_ok=True)
+                if dst.exists():
+                    shutil.rmtree(dst)
                 shutil.move(str(src), str(dst))
 
     summary = write_dataset_index(out_root / "index.jsonl", kept_metas) if kept_metas else {"buckets": {}}

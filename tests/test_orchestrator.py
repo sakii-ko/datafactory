@@ -3,7 +3,7 @@ from pathlib import Path
 
 from datafarm.backends.base import CaptureBackend, JobSpec, default_plan
 from datafarm.backends.mock import MockBackend
-from datafarm.orchestrator import gpu_env, run_job
+from datafarm.orchestrator import run_job
 from datafarm.qa import QAConfig
 from datafarm.schema import Viewpoint
 
@@ -68,8 +68,3 @@ def test_run_job_concurrent(tmp_path):
 def test_run_job_concurrent_with_gpus(tmp_path):
     rep = run_job(_job(out_root=str(tmp_path), num_episodes=4), MockBackend(), gpus=[0, 1], workers=2)
     assert rep.kept == 4
-
-
-def test_gpu_env():
-    assert gpu_env(None) == {}
-    assert gpu_env(3) == {"CUDA_VISIBLE_DEVICES": "3"}

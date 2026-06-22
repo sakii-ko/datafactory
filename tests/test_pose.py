@@ -67,6 +67,13 @@ def test_coordframe_equivariance():
     assert np.allclose(lhs, rhs, atol=1e-6)
 
 
+def test_pose_equality_returns_bool():
+    a = Pose6DoF([1, 2, 3], [1, 0, 0, 0])
+    b = Pose6DoF([1, 2, 3], [1, 0, 0, 0])
+    c = Pose6DoF([1, 2, 4], [1, 0, 0, 0])
+    assert (a == b) is True and (a == c) is False  # must not raise on ndarray fields
+
+
 def test_yaw_faces_x():
     p = Pose6DoF([0, 0, 0], [1, 0, 0, 0])  # identity -> forward +X
     assert np.isclose(p.yaw(), 0.0, atol=1e-9)

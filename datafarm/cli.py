@@ -52,7 +52,7 @@ def main(argv=None) -> int:
     job = JobSpec(
         name=args.name, backend=args.backend, num_episodes=args.episodes,
         steps_per_episode=args.steps, fps=args.fps, resolution=(w, h),
-        viewpoints=tuple(Viewpoint(v) for v in args.viewpoints.split(",")),
+        viewpoints=tuple(Viewpoint(v.strip().lower()) for v in args.viewpoints.split(",")),
         seed=args.seed, out_root=args.out,
     )
     gpus = [int(x) for x in args.gpus.split(",")] if args.gpus else None

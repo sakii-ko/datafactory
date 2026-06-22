@@ -35,6 +35,20 @@ def test_infer_actions_straight_line():
     assert acts[-1].keys.tolist() == [0] * len(ACTION_KEYS)  # last is zero
 
 
+def test_ue_frame_strafe_maps_to_right_after_conversion():
+    # UE +Y is right; canonical is Y-left. Converting before inference must label 'right'
+    # (regression for the swapped left/right bug in UE episodes).
+    from datafarm.pose import CoordFrame
+    players = [Pose6DoF([0, 10 * i, 0], [1, 0, 0, 0], CoordFrame.UE_LEFT_CM) for i in range(5)]
+    cams = [Pose6DoF([0, 10 * i, 0], [1, 0, 0, 0], CoordFrame.UE_LEFT_CM) for i in range(5)]
+    acts = infer_actions(
+        [p.to(CoordFrame.CANON_RH_M) for p in players],
+        [c.to(CoordFrame.CANON_RH_M) for c in cams],
+        deadzone=0.01,
+    )
+    assert acts[0].right == 1 and acts[0].left == 0 and acts[0].forward == 0
+
+
 def test_plucker_shape_and_unit_dirs():
     K = np.array([[100.0, 0, 32], [0, 100.0, 32], [0, 0, 1]])
     c2w = np.eye(4)

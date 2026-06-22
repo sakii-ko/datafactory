@@ -10,7 +10,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from .pose import CoordFrame, Pose6DoF
+from . import manifest
+from .pose import Pose6DoF
 from .schema import ACTION_KEYS, Action, Episode, EpisodeMeta, FrameRef, Step
 
 _POSE_COLS = (
@@ -22,7 +23,18 @@ _BASE_FIELDS = ["index", "t", "rgb", *_POSE_COLS, *ACTION_KEYS]
 
 def save_frame(array: np.ndarray, path: Path) -> None:
     Path(path).parent.mkdir(parents=True, exist_ok=True)
-    Image.fromarray(np.asarray(array, np.uint8)).save(path)
+    Image.fromarray(np.asarray(array, np.uint8)).convert("RGB").save(path)  # enforce HxWx3
+
+
+def save_depth16(array: np.ndarray, path: Path) -> None:
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    Image.fromarray(np.asarray(array).astype(np.uint16)).save(path)  # 16-bit PNG, no precision loss
+
+
+def save_mask(array: np.ndarray, path: Path) -> None:
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    a = np.asarray(array, np.uint8)
+    Image.fromarray(a if a.ndim == 2 else a[..., :3]).save(path)
 
 
 def load_frame(path: Path) -> np.ndarray:
@@ -32,9 +44,11 @@ def load_frame(path: Path) -> np.ndarray:
 def encode_video(frames_dir: Path, out: Path, fps: float, codec: str = "libx264") -> Path:
     if not shutil.which("ffmpeg"):
         raise RuntimeError("ffmpeg not found")
-    subprocess.run(
-        ["ffmpeg", "-y", "-framerate", str(fps), "-i", str(Path(frames_dir) / "%06d.png"),
-         "-c:v", codec, "-pix_fmt", "yuv420p", str(out)],
+    if not sorted(Path(frames_dir).glob("*.png")):
+        raise RuntimeError(f"no frames to encode in {frames_dir}")
+    subprocess.run(  # glob input tolerates non-zero start / gaps in frame indices
+        ["ffmpeg", "-y", "-framerate", str(fps), "-pattern_type", "glob",
+         "-i", str(Path(frames_dir) / "*.png"), "-c:v", codec, "-pix_fmt", "yuv420p", str(out)],
         check=True, capture_output=True,
     )
     return Path(out)
@@ -49,6 +63,14 @@ def write_episode(ep: Episode, out_root: Path, video: bool = False, codec: str =
             rel = f"frames/{s.index:06d}.png"
             save_frame(s.rgb.array, d / rel)
             s.rgb.path = rel
+        if s.depth and s.depth.has_data:
+            rel = f"depth/{s.index:06d}.png"
+            save_depth16(s.depth.array, d / rel)
+            s.depth.path = rel
+        if s.seg and s.seg.has_data:
+            rel = f"seg/{s.index:06d}.png"
+            save_mask(s.seg.array, d / rel)
+            s.seg.path = rel
         rows.append(s.to_row())
         has_depth |= s.depth is not None
         has_seg |= s.seg is not None
@@ -57,8 +79,7 @@ def write_episode(ep: Episode, out_root: Path, video: bool = False, codec: str =
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
         w.writerows(rows)
-    meta = ep.meta.to_dict() | {"num_steps": len(ep.steps)}
-    (d / "meta.json").write_text(json.dumps(meta, indent=2, sort_keys=True))
+    manifest.write_meta(d / "meta.json", ep.meta.to_dict() | {"num_steps": len(ep.steps)})
     if video:
         encode_video(d / "frames", d / "video.mp4", ep.meta.fps, codec)
     return d

@@ -29,7 +29,7 @@ class Source(str, Enum):
     AAA = "aaa"
 
 
-@dataclass
+@dataclass(eq=False)
 class Action:
     keys: np.ndarray  # (6,) in {0,1}, order = ACTION_KEYS
 
@@ -40,6 +40,11 @@ class Action:
         if name in ACTION_KEYS:
             return int(self.keys[ACTION_KEYS.index(name)])
         raise AttributeError(name)
+
+    def __eq__(self, o):
+        return isinstance(o, Action) and np.array_equal(self.keys, o.keys)
+
+    __hash__ = None
 
     def to_list(self) -> list[int]:
         return [int(v) for v in self.keys]
@@ -53,7 +58,7 @@ class Action:
         return cls(np.array([d.get(k, 0) for k in ACTION_KEYS], np.uint8))
 
 
-@dataclass
+@dataclass(eq=False)
 class FrameRef:
     path: str | None = None       # relative to episode dir
     array: np.ndarray | None = None  # HxWx3 uint8, optional in-memory
@@ -61,6 +66,11 @@ class FrameRef:
     @property
     def has_data(self) -> bool:
         return self.array is not None
+
+    def __eq__(self, o):
+        return isinstance(o, FrameRef) and self.path == o.path and np.array_equal(self.array, o.array)
+
+    __hash__ = None
 
 
 @dataclass
