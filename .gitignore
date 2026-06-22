@@ -24,6 +24,8 @@ ue/**/Binaries/
 ue/**/Intermediate/
 ue/**/Saved/
 ue/**/DerivedDataCache/
+# imported third-party assets (large, regenerable, license-mixed — never commit)
+ue/**/Content/Imported/
 
 # env / secrets
 .env

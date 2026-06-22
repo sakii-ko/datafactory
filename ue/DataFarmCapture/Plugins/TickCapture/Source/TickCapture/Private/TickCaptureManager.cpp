@@ -240,7 +240,8 @@ void ATickCaptureManager::SpawnTestScene()
 		A->SetActorScale3D(Scale);
 	};
 	SpawnMesh(Plane, FVector(0, 0, 0), FVector(80, 80, 1));
-	// scatter varied props (deterministic) for visual reference + parallax
+
+	// scatter varied primitives for visual reference + parallax
 	FRandomStream Rng(Cfg.Seed * 977 + 13);
 	for (int32 i = 0; i < 18; ++i)
 	{
