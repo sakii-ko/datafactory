@@ -22,10 +22,12 @@ class UEConfig:
     project: str = str(_REPO / "ue/DataFarmCapture/DataFarmCapture.uproject")
     map_name: str = os.environ.get("DATAFARM_UE_MAP", "/Game/Maps/Capture")
     warmup_frames: int = 6
-    orbit_test: bool = True   # placeholder camera motion until the P7 agent drives the pawn
+    agent_mode: bool = True   # P7 wandering ExplorerCharacter + follow camera (default real mode)
+    agent_bounds: float = 1500.0
+    orbit_test: bool = True   # placeholder camera motion (used when agent_mode is False)
     infer_actions: bool = True   # derive WSAD labels from pose deltas (M-G3 §4.2)
     action_deadzone: float = 1.0  # cm/frame; UE_LEFT_CM units
-    timeout_s: int = 1800
+    timeout_s: int = 600
 
     @property
     def editor_cmd(self) -> Path:
@@ -66,16 +68,26 @@ class UEBackend(CaptureBackend):
             "warmup_frames": int(self.cfg.warmup_frames),
             "viewpoint": plan.viewpoint.value,
             "seed": int(plan.seed),
-            "orbit_test": bool(plan.extra.get("orbit_test", self.cfg.orbit_test)),
+            "agent_mode": bool(self.cfg.agent_mode),
+            "agent_bounds": float(self.cfg.agent_bounds),
+            "orbit_test": bool(self.cfg.orbit_test) and not self.cfg.agent_mode,
         }
         cfg_path = out_dir / "render_config.json"
         cfg_path.write_text(json.dumps(cfg, indent=2))
         args = ["bash", str(_REPO / "scripts" / "ue_capture.sh"), str(cfg_path)]
         if gpu is not None:
             args.append(str(gpu))
-        subprocess.run(args, check=True, capture_output=True, timeout=self.cfg.timeout_s)
+        # Redirect to a file, NOT a pipe: UE forks UnrealTraceServer, which inherits the
+        # stdout pipe and keeps it open after UE exits, so a piped subprocess.run would
+        # block until timeout. Also judge success by artifacts, not the (often non-zero)
+        # return code from a forced shutdown.
+        log_path = out_dir / "ue.log"
+        with open(log_path, "wb") as lf:
+            proc = subprocess.run(args, stdout=lf, stderr=subprocess.STDOUT, timeout=self.cfg.timeout_s)
         if not (out_dir / "steps.csv").exists():
-            raise RuntimeError(f"UE capture produced no steps.csv in {out_dir}")
+            tail = log_path.read_bytes()[-2000:].decode("utf-8", "replace") if log_path.exists() else ""
+            raise RuntimeError(f"UE capture produced no steps.csv in {out_dir} "
+                               f"(rc={proc.returncode})\n{tail}")
         ep = read_episode(out_dir)
         if self.cfg.infer_actions and len(ep) > 1:
             acts = infer_actions(

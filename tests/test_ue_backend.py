@@ -61,7 +61,8 @@ def test_ue_capture_wiring(tmp_path, monkeypatch):
 
 
 def test_ue_capture_raises_without_output(tmp_path, monkeypatch):
-    monkeypatch.setattr(ue_mod.subprocess, "run", lambda *a, **k: type("R", (), {"returncode": 0})())
+    monkeypatch.setattr(ue_mod.subprocess, "run",
+                        lambda *a, **k: type("R", (), {"returncode": 1, "stderr": b"boom"})())
     plan = EpisodePlan("ue_ep1", seed=0, viewpoint=Viewpoint.TPV, steps=4, fps=16.0, resolution=(32, 32))
     import pytest
     with pytest.raises(RuntimeError):

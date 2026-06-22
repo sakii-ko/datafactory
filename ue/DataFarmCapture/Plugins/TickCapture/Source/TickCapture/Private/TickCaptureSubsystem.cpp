@@ -50,6 +50,8 @@ void UTickCaptureSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	if (Obj->TryGetNumberField(TEXT("seed"), I)) Cfg.Seed = I;
 	if (Obj->TryGetNumberField(TEXT("fps"), D)) Cfg.Fps = static_cast<float>(D);
 	Obj->TryGetBoolField(TEXT("orbit_test"), Cfg.bOrbitTest);
+	Obj->TryGetBoolField(TEXT("agent_mode"), Cfg.bAgentMode);
+	if (Obj->TryGetNumberField(TEXT("agent_bounds"), D)) Cfg.AgentBounds = static_cast<float>(D);
 
 	if (Cfg.OutDir.IsEmpty())
 	{

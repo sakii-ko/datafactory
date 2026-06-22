@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -19,6 +20,7 @@ class RunReport:
     buckets: dict = field(default_factory=dict)
     dropped_ids: list = field(default_factory=list)
     failed_ids: list = field(default_factory=list)
+    errors: list = field(default_factory=list)
 
 
 def gpu_env(gpu: int | None) -> dict:
@@ -35,19 +37,21 @@ def run_job(
     out_root = Path(job.out_root) / job.name
     out_root.mkdir(parents=True, exist_ok=True)
     plans = backend.plan(job)
-    kept_metas, dropped, failed = [], [], []
+    kept_metas, dropped, failed, errors = [], [], [], []
 
     for i, plan in enumerate(plans):
         gpu = gpus[i % len(gpus)] if gpus else None
-        ep = None
+        ep, err = None, None
         for _ in range(retries + 1):
             try:
                 ep = backend.capture(plan, out_root, gpu=gpu)
                 break
-            except Exception:
-                ep = None
+            except Exception as e:
+                ep, err = None, e
         if ep is None:
             failed.append(plan.episode_id)
+            errors.append({"episode_id": plan.episode_id, "error": str(err)[:800]})
+            print(f"[datafarm] episode {plan.episode_id} failed: {err}", file=sys.stderr)
             continue
         frames = [s.rgb.array for s in ep.steps] if all(s.rgb.has_data for s in ep.steps) else None
         qa = assess(ep, frames=frames, cfg=qa_cfg)
@@ -66,4 +70,4 @@ def run_job(
         if kept_metas else {"buckets": {}}
     )
     return RunReport(str(out_root), len(plans), len(kept_metas), len(dropped),
-                     len(failed), summary["buckets"], dropped, failed)
+                     len(failed), summary["buckets"], dropped, failed, errors)

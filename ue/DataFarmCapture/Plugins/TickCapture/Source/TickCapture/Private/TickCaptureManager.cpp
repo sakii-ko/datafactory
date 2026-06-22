@@ -24,6 +24,7 @@
 #include "Components/SkyAtmosphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
+#include "ExplorerCharacter.h"
 
 ATickCaptureManager::ATickCaptureManager()
 {
@@ -48,6 +49,7 @@ void ATickCaptureManager::BeginPlay()
 		UE_LOG(LogTemp, Warning, TEXT("TickCapture: BeginPlay with no config; idle."));
 		return;
 	}
+	SaveCounter = MakeShared<FThreadSafeCounter, ESPMode::ThreadSafe>();
 	RenderTarget = NewObject<UTextureRenderTarget2D>(this);
 	RenderTarget->ClearColor = FLinearColor::Black;
 	RenderTarget->bAutoGenerateMips = false;
@@ -59,13 +61,28 @@ void ATickCaptureManager::BeginPlay()
 	SceneCapture->bCaptureOnMovement = false;
 	SceneCapture->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
 
+	if (Cfg.bOrbitTest || Cfg.bAgentMode)
+	{
+		SpawnTestScene();
+	}
+	if (Cfg.bAgentMode)
+	{
+		if (UWorld* W = GetWorld())
+		{
+			FActorSpawnParameters SP;
+			SP.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			AExplorerCharacter* Ch = W->SpawnActor<AExplorerCharacter>(FVector(0, 0, 150), FRotator::ZeroRotator, SP);
+			if (Ch)
+			{
+				Ch->Init(Cfg.Seed, Cfg.AgentBounds);
+				Agent = Ch;
+				TrackedActor = Ch;
+			}
+		}
+	}
 	if (!TrackedActor)
 	{
 		TrackedActor = this;
-	}
-	if (Cfg.bOrbitTest)
-	{
-		SpawnTestScene();
 	}
 	IFileManager::Get().MakeDirectory(*(Cfg.OutDir / TEXT("frames")), true);
 
@@ -85,14 +102,18 @@ void ATickCaptureManager::Tick(float DeltaSeconds)
 
 	if (TickCount >= Cfg.WarmupFrames + Cfg.NumFrames)
 	{
-		if (Pending.Num() == 0)
+		if (Pending.Num() == 0 && SaveCounter->GetValue() == 0)
 		{
 			Finish();
 		}
 		return;
 	}
 
-	if (Cfg.bOrbitTest)
+	if (Cfg.bAgentMode)
+	{
+		UpdateFollowCamera();
+	}
+	else if (Cfg.bOrbitTest)
 	{
 		const float Ang = TickCount * 0.05f;
 		SetActorLocation(FVector(600.f * FMath::Cos(Ang), 600.f * FMath::Sin(Ang), 200.f));
@@ -117,7 +138,9 @@ void ATickCaptureManager::EnqueueFrame(int32 OutIndex)
 	ENQUEUE_RENDER_COMMAND(DataFarmEnqueueCopy)(
 		[RBptr, RTRes](FRHICommandListImmediate& RHICmdList)
 		{
-			RBptr->EnqueueCopy(RHICmdList, RTRes->GetRenderTargetTexture());
+			FRHITexture* Tex = RTRes->GetRenderTargetTexture();
+			RHICmdList.Transition(FRHITransitionInfo(Tex, ERHIAccess::Unknown, ERHIAccess::CopySrc));
+			RBptr->EnqueueCopy(RHICmdList, Tex);
 		});
 
 	Pending.Add({RB, OutIndex, Row});
@@ -147,12 +170,15 @@ void ATickCaptureManager::DrainReadbacks()
 		P.Readback->Unlock();
 
 		const FString Path = Cfg.OutDir / FString::Printf(TEXT("frames/%06d.png"), P.OutIndex);
-		Async(EAsyncExecution::ThreadPool, [Pixels = MoveTemp(Pixels), W, H, Path]()
+		SaveCounter->Increment();
+		TSharedPtr<FThreadSafeCounter, ESPMode::ThreadSafe> SC = SaveCounter;
+		Async(EAsyncExecution::ThreadPool, [Pixels = MoveTemp(Pixels), W, H, Path, SC]()
 		{
 			IImageWrapperModule& Mod = FModuleManager::LoadModuleChecked<IImageWrapperModule>("ImageWrapper");
 			TSharedPtr<IImageWrapper> Img = Mod.CreateImageWrapper(EImageFormat::PNG);
 			Img->SetRaw(Pixels.GetData(), static_cast<int64>(Pixels.Num()) * sizeof(FColor), W, H, ERGBFormat::BGRA, 8);
 			FFileHelper::SaveArrayToFile(Img->GetCompressed(100), *Path);
+			SC->Decrement();
 		});
 		Rows.Add(P.Row);
 	}
@@ -216,6 +242,24 @@ void ATickCaptureManager::SpawnTestScene()
 	UE_LOG(LogTemp, Display, TEXT("TickCapture: spawned runtime test scene."));
 }
 
+void ATickCaptureManager::UpdateFollowCamera()
+{
+	if (!TrackedActor) return;
+	const FVector C = TrackedActor->GetActorLocation();
+	const FRotator R = TrackedActor->GetActorRotation();
+	const FVector F = R.Vector();
+	if (IsFPV())
+	{
+		SceneCapture->SetWorldLocationAndRotation(C + FVector(0, 0, 70) + F * 15.f, R);
+	}
+	else
+	{
+		const FVector Cam = C - F * 350.f + FVector(0, 0, 160);
+		const FRotator Look = (C + FVector(0, 0, 60) - Cam).Rotation();
+		SceneCapture->SetWorldLocationAndRotation(Cam, Look);
+	}
+}
+
 void ATickCaptureManager::Finish()
 {
 	bDone = true;
@@ -232,5 +276,5 @@ void ATickCaptureManager::Finish()
 	FFileHelper::SaveStringToFile(Meta, *(Cfg.OutDir / TEXT("meta.json")));
 
 	UE_LOG(LogTemp, Display, TEXT("TickCapture: wrote %d frames -> %s"), Rows.Num(), *Cfg.OutDir);
-	FPlatformMisc::RequestExit(false);
+	FPlatformMisc::RequestExit(true);  // force: -game with a possessed pawn won't exit on a soft request
 }

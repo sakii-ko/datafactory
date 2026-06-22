@@ -20,6 +20,8 @@ struct FCaptureConfig
 	int32 Seed = 0;
 	FString Viewpoint = TEXT("tpv");
 	bool bOrbitTest = false;
+	bool bAgentMode = false;
+	float AgentBounds = 1500.f;
 };
 
 // Tick-synchronized headless capture: each tick samples (RGB, player 6-DoF, camera 6-DoF,
@@ -47,6 +49,8 @@ private:
 	void DrainReadbacks();
 	void Finish();
 	void SpawnTestScene();
+	void UpdateFollowCamera();
+	bool IsFPV() const { return Cfg.Viewpoint == TEXT("fpv"); }
 	FString BuildRow(int32 OutIndex) const;
 
 	UPROPERTY()
@@ -55,6 +59,8 @@ private:
 	UTextureRenderTarget2D* RenderTarget = nullptr;
 	UPROPERTY()
 	AActor* TrackedActor = nullptr;
+	UPROPERTY()
+	AActor* Agent = nullptr;
 
 	FCaptureConfig Cfg;
 	int32 TickCount = 0;
@@ -70,4 +76,5 @@ private:
 	};
 	TArray<FPendingReadback> Pending;
 	TArray<FString> Rows;
+	TSharedPtr<FThreadSafeCounter, ESPMode::ThreadSafe> SaveCounter;
 };
