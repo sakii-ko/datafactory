@@ -63,9 +63,31 @@ TPV: reposition camera 0 above/behind the pawn (`vset /camera/0/location|rotatio
   issue). RGB + depth + pose work. Segmentation is deferred (own track / CustomStencil instead).
 - **Python**: run on duan78 via the `fpack` conda env (3.10); `unrealcv` installed with `pip --user`.
 
+## Multi-GPU farm (`datafarm/farm/pool.py`)
+`EnvPool` runs W warm envs (one per GPU/port), each owned by a worker thread pulling episodes from a
+level-affinity queue (drains the loaded scene before paying the ~12s `set_map` reload). Crash
+(SIGSEGV / dead socket) → kill + relaunch on the next port in the slot's band (dodges TIME_WAIT) +
+requeue the plan (retry budget); the consumer is liveness-aware (no hang if all envs die) and dedupes
+to one terminal result per plan. Per-slot UE logs at `runs/<job>/_envs/slot<i>.log`.
+
+Headless launch per env: `xvfb-run -a -s "-screen 0 1280x720x24" <launcher>.sh -nosound -unattended
+-RenderOffScreen -graphicsadapter=K`. **Both** xvfb (fixes the startup GPU-benchmark SIGSEGV) **and**
+`-RenderOffScreen` (fixes the 2nd+ instance swapchain hang) are required. `K` = a discrete-GPU vulkan
+adapter index; `--gpus auto` discovers them (`discover_gpu_adapters()` skips the llvmpipe/CPU adapter).
+Per-instance port via `unrealcv.ini` written before each launch; launches serialized (shared ini).
+
 ## Run
+Single instance (env launched separately on :9000, e.g. for dev):
 ```
 PYTHONPATH=. <python> -m datafarm.cli run --backend unrealzoo --scenes <id> \
   --episodes N --steps 64 --fps 16 --res 640x480 --out runs
 ```
-`UnrealZooConfig.mode`: `"agent"` (default, ground BP_Character) or `"camera"` (free camera, demo).
+Multi-GPU farm (the supervisor launches + manages the envs):
+```
+PYTHONPATH=. <python> -m datafarm.cli run --backend unrealzoo --scenes <id> \
+  --gpus auto --envs 8 --binary <package>/UnrealZoo_UE5_6.sh \
+  --episodes 64 --steps 64 --res 640x480 --out runs
+```
+`--gpus auto` discovers the A6000 adapters; `--envs` = warm envs (default = #gpus). Run detached
+(nohup) on duan78 since the VPN drops periodically. `UnrealZooConfig.mode`: `"agent"` (default, ground
+BP_Character) or `"camera"` (free camera, demo).

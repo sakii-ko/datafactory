@@ -32,12 +32,17 @@ class UnrealZooConfig:
     cam_id: int = 0              # camera mode: which camera to drive
     agent_bp: str = "/Game/SmartLocomotion/Blueprints/BP_Character.BP_Character_C"
     agent_name: str = "df_agent"
+    policy: str = "navmesh"      # "navmesh" = autopilot between navmesh goals (collision-free,
+    #                              high yield); "wander" = manual forward+turn-on-hit
     eye_offset: tuple[float, float, float] = (20.0, 0.0, 0.0)   # eye 20cm forward of pawn
     speed: float = 200.0         # set_speed cap (cm/s)
     linear: float = 100.0        # set_move forward throttle [-100, 100]
     turn_max: float = 30.0       # set_move yaw input range [-30, 30] (deg)
     turn_jitter: float = 7.0     # per-step heading wander (deg) before clamp
     nav_radius: float = 8000.0   # navmesh start-goal sampling radius
+    nav_speed: float = 220.0     # navmesh autopilot speed (cm/s)
+    frame_dt: float = 0.25       # navmesh mode: seconds to let the agent walk between frame grabs
+    goal_reach: float = 300.0    # cm: pick a new navmesh goal once within this of the current one
     scene_load_wait: float = 12.0  # seconds to wait after vset .../level for the map to stream in
     warmup_steps: int = 6        # discarded forward steps before recording
     req_timeout: float = 15.0    # per-request socket timeout (warm pool: bound, don't hang)
@@ -150,15 +155,19 @@ class UnrealZooBackend(CaptureBackend):
     def _agent_loc(self, c, name) -> np.ndarray:
         return np.array([float(x) for x in self._req(c, f"vget /object/{name}/location").split()])
 
-    def _nav_start(self, c, name) -> None:
+    def _nav_goal(self, c, name) -> list[float] | None:
         r = self._req(c, f"vbp {name} generate_nav_goal {self.cfg.nav_radius:.0f} 0")
         try:
             g = json.loads(r).get("nav_goal", "")
             xyz = [float(p.split("=")[1]) for p in g.split() if "=" in p]
-            if len(xyz) == 3:
-                self._req(c, f"vset /object/{name}/location {xyz[0]:.1f} {xyz[1]:.1f} {xyz[2]:.1f}")
+            return xyz if len(xyz) == 3 else None
         except (json.JSONDecodeError, TypeError, ValueError, AttributeError):
-            pass  # keep the spawn location if navmesh sampling is unavailable
+            return None  # navmesh sampling unavailable
+
+    def _nav_start(self, c, name) -> None:
+        xyz = self._nav_goal(c, name)
+        if xyz:
+            self._req(c, f"vset /object/{name}/location {xyz[0]:.1f} {xyz[1]:.1f} {xyz[2]:.1f}")
 
     def _setup_agent(self, c) -> None:
         n = self.cfg.agent_name
@@ -184,6 +193,14 @@ class UnrealZooBackend(CaptureBackend):
     def _hit(self, c, name) -> bool:
         r = self._req(c, f"vbp {name} get_hit")
         return "1" in str(r) or "true" in str(r).lower()
+
+    def _agent_pose(self, c, name):
+        loc = np.array([float(x) for x in self._req(c, f"vget /object/{name}/location").split()])
+        yaw = np.deg2rad(float(self._req(c, f"vget /object/{name}/rotation").split()[1]))
+        return loc, yaw
+
+    def _nav_to(self, c, name, goal) -> None:
+        self._req(c, f"vbp {name} nav_to_goal_bypath {goal[0]:.1f} {goal[1]:.1f} {goal[2]:.1f}")
 
     # ---- capture ----
     def capture(self, plan: EpisodePlan, out_root: Path, gpu: int | None = None) -> Episode:
@@ -213,15 +230,34 @@ class UnrealZooBackend(CaptureBackend):
             loc = np.array([float(x) for x in self._req(c, f"vget /camera/{eye}/location").split()])
             yaw = np.deg2rad(float(self._req(c, f"vget /camera/{eye}/rotation").split()[1]))
 
-        if agent and self.cfg.warmup_steps:     # walk a few discarded steps so auto-exposure settles
+        navmesh = agent and self.cfg.policy == "navmesh"
+        goal = None
+        if navmesh:                              # autopilot toward navmesh goals (collision-free)
+            self._req(c, f"vbp {name} set_nav_speed {self.cfg.nav_speed}")
+            goal = self._nav_goal(c, name)
+            if goal:
+                self._nav_to(c, name, goal)
+
+        if agent and self.cfg.warmup_steps:      # let the agent start moving + auto-exposure settle
             for _ in range(self.cfg.warmup_steps):
-                self._req(c, f"vbp {name} set_move 0 {self.cfg.linear:.1f}")
+                if navmesh:
+                    time.sleep(self.cfg.frame_dt)
+                else:
+                    self._req(c, f"vbp {name} set_move 0 {self.cfg.linear:.1f}")
                 self._req(c, f"vget /camera/{eye}/lit png")
 
         steps = []
         v_ang = 0.0
         for i in range(plan.steps):
-            if agent:
+            if navmesh:
+                time.sleep(self.cfg.frame_dt)    # let the agent walk along its navmesh path
+                png = self._req(c, f"vget /camera/{eye}/lit png")
+                loc, yaw = self._agent_pose(c, name)
+                if goal is None or float(np.hypot(loc[0] - goal[0], loc[1] - goal[1])) < self.cfg.goal_reach:
+                    goal = self._nav_goal(c, name)
+                    if goal:
+                        self._nav_to(c, name, goal)
+            elif agent:
                 hit = self._hit(c, name)
                 v_ang = (rng.choice([-1.0, 1.0]) * self.cfg.turn_max if hit
                          else float(np.clip(v_ang + rng.normal(0, self.cfg.turn_jitter),
@@ -229,8 +265,7 @@ class UnrealZooBackend(CaptureBackend):
                 v_lin = 0.0 if hit else self.cfg.linear
                 self._req(c, f"vbp {name} set_move {v_ang:.1f} {v_lin:.1f}")
                 png = self._req(c, f"vget /camera/{eye}/lit png")
-                loc = np.array([float(x) for x in self._req(c, f"vget /object/{name}/location").split()])
-                yaw = np.deg2rad(float(self._req(c, f"vget /object/{name}/rotation").split()[1]))
+                loc, yaw = self._agent_pose(c, name)
             else:
                 yaw += float(rng.normal(0, 0.06))
                 loc = loc + 400.0 * np.array([np.cos(yaw), np.sin(yaw), 0.0])
