@@ -43,6 +43,8 @@ class UnrealZooConfig:
     nav_speed: float = 110.0     # navmesh autopilot speed (cm/s) — keep per-frame travel small/smooth
     frame_dt: float = 0.06       # navmesh mode: seconds between frame grabs (small => fine sampling)
     goal_reach: float = 300.0    # cm: pick a new navmesh goal once within this of the current one
+    goal_candidates: int = 4     # sample this many navmesh goals, walk to the farthest (directed
+    #                              exploration -> covers new ground instead of random-walk looping)
     tpv_back: float = 350.0      # TPV chase cam: distance behind the agent (cm)
     tpv_height: float = 180.0    # TPV chase cam: height above the agent (cm)
     tpv_pitch: float = -12.0     # TPV chase cam: downward pitch (deg)
@@ -175,6 +177,17 @@ class UnrealZooBackend(CaptureBackend):
                 time.sleep(2.0)
         return None
 
+    def _explore_goal(self, c, name, loc) -> list[float] | None:
+        # sample several navmesh goals, take the one farthest from the current position
+        best, bestd = None, -1.0
+        for _ in range(max(1, self.cfg.goal_candidates)):
+            g = self._nav_goal(c, name)
+            if g:
+                d = float(np.hypot(g[0] - loc[0], g[1] - loc[1]))
+                if d > bestd:
+                    best, bestd = g, d
+        return best
+
     def _nav_start(self, c, name) -> None:
         xyz = self._nav_goal(c, name, tries=12)   # wait for the navmesh to finish building
         if xyz:
@@ -274,7 +287,7 @@ class UnrealZooBackend(CaptureBackend):
                 time.sleep(self.cfg.frame_dt)
                 loc, yaw = self._agent_pose(c, name)
                 if goal is None or float(np.hypot(loc[0] - goal[0], loc[1] - goal[1])) < self.cfg.goal_reach:
-                    goal = self._nav_goal(c, name)
+                    goal = self._explore_goal(c, name, loc)   # farthest-of-K -> explore, don't loop
                     if goal:
                         self._nav_to(c, name, goal)
             elif agent:                          # manual wander
