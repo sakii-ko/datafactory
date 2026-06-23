@@ -40,12 +40,13 @@ class UnrealZooConfig:
     turn_max: float = 30.0       # set_move yaw input range [-30, 30] (deg)
     turn_jitter: float = 7.0     # per-step heading wander (deg) before clamp
     nav_radius: float = 8000.0   # navmesh start-goal sampling radius
-    nav_speed: float = 220.0     # navmesh autopilot speed (cm/s)
-    frame_dt: float = 0.25       # navmesh mode: seconds to let the agent walk between frame grabs
+    nav_speed: float = 110.0     # navmesh autopilot speed (cm/s) — keep per-frame travel small/smooth
+    frame_dt: float = 0.06       # navmesh mode: seconds between frame grabs (small => fine sampling)
     goal_reach: float = 300.0    # cm: pick a new navmesh goal once within this of the current one
     tpv_back: float = 350.0      # TPV chase cam: distance behind the agent (cm)
     tpv_height: float = 180.0    # TPV chase cam: height above the agent (cm)
     tpv_pitch: float = -12.0     # TPV chase cam: downward pitch (deg)
+    tpv_smooth: float = 0.25     # TPV chase cam: lerp factor toward the behind-agent target (0..1)
     scene_load_wait: float = 12.0  # seconds to wait after vset .../level for the map to stream in
     warmup_steps: int = 6        # discarded forward steps before recording
     req_timeout: float = 15.0    # per-request socket timeout (warm pool: bound, don't hang)
@@ -265,6 +266,7 @@ class UnrealZooBackend(CaptureBackend):
                 self._req(c, f"vget /camera/{eye}/lit png")
 
         tpv = agent and plan.viewpoint == Viewpoint.TPV
+        cam_loc = cam_yaw = None   # TPV smooth-follow camera state (lerps toward the behind-agent target)
         steps = []
         v_ang = 0.0
         for i in range(plan.steps):
@@ -289,12 +291,18 @@ class UnrealZooBackend(CaptureBackend):
                 self._req(c, f"vset /camera/{eye}/location {loc[0]:.2f} {loc[1]:.2f} {loc[2]:.2f}")
                 self._req(c, f"vset /camera/{eye}/rotation 0 {np.rad2deg(yaw):.2f} 0")
 
-            if tpv:                              # third-person: chase cam (camera 0) behind the agent
-                cloc, cpitch = self._chase_cam(loc, yaw)
-                self._req(c, f"vset /camera/0/location {cloc[0]:.1f} {cloc[1]:.1f} {cloc[2]:.1f}")
-                self._req(c, f"vset /camera/0/rotation {cpitch:.1f} {np.rad2deg(yaw):.1f} 0")
+            if tpv:                              # third-person: smooth chase cam behind the agent
+                tgt, cpitch = self._chase_cam(loc, yaw)
+                if cam_loc is None:              # first frame: snap to target (no lerp)
+                    cam_loc, cam_yaw = tgt, yaw
+                else:                            # lerp position + yaw -> no teleport on sharp turns
+                    a = self.cfg.tpv_smooth
+                    cam_loc = cam_loc + a * (tgt - cam_loc)
+                    cam_yaw = cam_yaw + a * ((yaw - cam_yaw + np.pi) % (2 * np.pi) - np.pi)
+                self._req(c, f"vset /camera/0/location {cam_loc[0]:.1f} {cam_loc[1]:.1f} {cam_loc[2]:.1f}")
+                self._req(c, f"vset /camera/0/rotation {cpitch:.1f} {np.rad2deg(cam_yaw):.1f} 0")
                 png = self._req(c, "vget /camera/0/lit png")
-                cpose = Pose6DoF(cloc, _yaw_quat(yaw), CoordFrame.UE_LEFT_CM)
+                cpose = Pose6DoF(cam_loc.copy(), _yaw_quat(cam_yaw), CoordFrame.UE_LEFT_CM)
             else:                                # first-person: agent eye cam (or the free camera)
                 png = self._req(c, f"vget /camera/{eye}/lit png")
                 cpose = None
