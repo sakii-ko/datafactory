@@ -43,6 +43,9 @@ class UnrealZooConfig:
     nav_speed: float = 220.0     # navmesh autopilot speed (cm/s)
     frame_dt: float = 0.25       # navmesh mode: seconds to let the agent walk between frame grabs
     goal_reach: float = 300.0    # cm: pick a new navmesh goal once within this of the current one
+    tpv_back: float = 350.0      # TPV chase cam: distance behind the agent (cm)
+    tpv_height: float = 180.0    # TPV chase cam: height above the agent (cm)
+    tpv_pitch: float = -12.0     # TPV chase cam: downward pitch (deg)
     scene_load_wait: float = 12.0  # seconds to wait after vset .../level for the map to stream in
     warmup_steps: int = 6        # discarded forward steps before recording
     req_timeout: float = 15.0    # per-request socket timeout (warm pool: bound, don't hang)
@@ -209,6 +212,12 @@ class UnrealZooBackend(CaptureBackend):
     def _nav_to(self, c, name, goal) -> None:
         self._req(c, f"vbp {name} nav_to_goal_bypath {goal[0]:.1f} {goal[1]:.1f} {goal[2]:.1f}")
 
+    def _chase_cam(self, loc, yaw):
+        # TPV: place the free camera behind + above the agent, looking the way it faces (over-shoulder)
+        fwd = np.array([np.cos(yaw), np.sin(yaw), 0.0])
+        cam = loc - self.cfg.tpv_back * fwd + np.array([0.0, 0.0, self.cfg.tpv_height])
+        return cam, self.cfg.tpv_pitch   # rotation = (pitch_down, rad2deg(yaw), 0)
+
     # ---- capture ----
     def capture(self, plan: EpisodePlan, out_root: Path, gpu: int | None = None) -> Episode:
         from PIL import Image
@@ -255,35 +264,44 @@ class UnrealZooBackend(CaptureBackend):
                     self._req(c, f"vbp {name} set_move 0 {self.cfg.linear:.1f}")
                 self._req(c, f"vget /camera/{eye}/lit png")
 
+        tpv = agent and plan.viewpoint == Viewpoint.TPV
         steps = []
         v_ang = 0.0
         for i in range(plan.steps):
-            if navmesh:
-                time.sleep(self.cfg.frame_dt)    # let the agent walk along its navmesh path
-                png = self._req(c, f"vget /camera/{eye}/lit png")
+            if navmesh:                          # agent autopilots its navmesh path; we just sample
+                time.sleep(self.cfg.frame_dt)
                 loc, yaw = self._agent_pose(c, name)
                 if goal is None or float(np.hypot(loc[0] - goal[0], loc[1] - goal[1])) < self.cfg.goal_reach:
                     goal = self._nav_goal(c, name)
                     if goal:
                         self._nav_to(c, name, goal)
-            elif agent:
+            elif agent:                          # manual wander
                 hit = self._hit(c, name)
                 v_ang = (rng.choice([-1.0, 1.0]) * self.cfg.turn_max if hit
                          else float(np.clip(v_ang + rng.normal(0, self.cfg.turn_jitter),
                                             -self.cfg.turn_max, self.cfg.turn_max)))
                 v_lin = 0.0 if hit else self.cfg.linear
                 self._req(c, f"vbp {name} set_move {v_ang:.1f} {v_lin:.1f}")
-                png = self._req(c, f"vget /camera/{eye}/lit png")
                 loc, yaw = self._agent_pose(c, name)
-            else:
+            else:                                # free-camera flythrough (demo scene)
                 yaw += float(rng.normal(0, 0.06))
                 loc = loc + 400.0 * np.array([np.cos(yaw), np.sin(yaw), 0.0])
                 self._req(c, f"vset /camera/{eye}/location {loc[0]:.2f} {loc[1]:.2f} {loc[2]:.2f}")
                 self._req(c, f"vset /camera/{eye}/rotation 0 {np.rad2deg(yaw):.2f} 0")
+
+            if tpv:                              # third-person: chase cam (camera 0) behind the agent
+                cloc, cpitch = self._chase_cam(loc, yaw)
+                self._req(c, f"vset /camera/0/location {cloc[0]:.1f} {cloc[1]:.1f} {cloc[2]:.1f}")
+                self._req(c, f"vset /camera/0/rotation {cpitch:.1f} {np.rad2deg(yaw):.1f} 0")
+                png = self._req(c, "vget /camera/0/lit png")
+                cpose = Pose6DoF(cloc, _yaw_quat(yaw), CoordFrame.UE_LEFT_CM)
+            else:                                # first-person: agent eye cam (or the free camera)
                 png = self._req(c, f"vget /camera/{eye}/lit png")
+                cpose = None
+
             arr = np.array(Image.open(io.BytesIO(png)).convert("RGB"))
-            pose = Pose6DoF(loc.copy(), _yaw_quat(yaw), CoordFrame.UE_LEFT_CM)
-            steps.append(Step(i, i / plan.fps, FrameRef(array=arr), pose, pose, Action.zero()))
+            ppose = Pose6DoF(loc.copy(), _yaw_quat(yaw), CoordFrame.UE_LEFT_CM)
+            steps.append(Step(i, i / plan.fps, FrameRef(array=arr), ppose, cpose or ppose, Action.zero()))
 
         if len(steps) > 1:
             acts = infer_actions(
@@ -296,7 +314,7 @@ class UnrealZooBackend(CaptureBackend):
 
         h, w = steps[0].rgb.array.shape[:2]
         meta = EpisodeMeta(
-            episode_id=plan.episode_id, source=Source.UNREALZOO, viewpoint=Viewpoint.FPV,
+            episode_id=plan.episode_id, source=Source.UNREALZOO, viewpoint=plan.viewpoint,
             label_kind=LabelKind.PRECISE_ACTION, scene_id=plan.scene_id or plan.map,
             fps=plan.fps, resolution=(w, h), seed=plan.seed,
             coord_frame=CoordFrame.UE_LEFT_CM,

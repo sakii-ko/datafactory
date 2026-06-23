@@ -23,7 +23,7 @@ tags = ["placeholder", "primitives"]
 [[scene]]
 id = "uz_example"
 backend = "unrealzoo"
-viewpoints = ["fpv"]
+viewpoints = ["fpv", "tpv"]
 license = "research-only"
 tags = ["unrealzoo", "outdoor", "industrial"]   # the UE5 ExampleScene package default map
 
@@ -33,7 +33,7 @@ tags = ["unrealzoo", "outdoor", "industrial"]   # the UE5 ExampleScene package d
 id = "uz_containeryard"
 backend = "unrealzoo"
 map = "ContainerYard_Day"
-viewpoints = ["fpv"]
+viewpoints = ["fpv", "tpv"]
 license = "research-only"
 tags = ["unrealzoo", "agent", "outdoor", "industrial"]
 
@@ -41,7 +41,7 @@ tags = ["unrealzoo", "agent", "outdoor", "industrial"]
 id = "uz_downtown"
 backend = "unrealzoo"
 map = "DowntownWest"
-viewpoints = ["fpv"]
+viewpoints = ["fpv", "tpv"]
 license = "research-only"
 tags = ["unrealzoo", "agent", "urban"]
 
@@ -49,7 +49,7 @@ tags = ["unrealzoo", "agent", "urban"]
 id = "uz_suburb"
 backend = "unrealzoo"
 map = "SuburbNeighborhood_Day"   # UnrealZoo's primary navigation scene (has navmesh + safe_start)
-viewpoints = ["fpv"]
+viewpoints = ["fpv", "tpv"]
 license = "research-only"
 tags = ["unrealzoo", "agent", "suburb", "outdoor"]
 
@@ -57,7 +57,7 @@ tags = ["unrealzoo", "agent", "suburb", "outdoor"]
 id = "uz_ancientruins"
 backend = "unrealzoo"
 map = "AncientRuins"
-viewpoints = ["fpv"]
+viewpoints = ["fpv", "tpv"]
 license = "research-only"
 tags = ["unrealzoo", "agent", "outdoor", "ruins"]
 
@@ -65,7 +65,7 @@ tags = ["unrealzoo", "agent", "outdoor", "ruins"]
 id = "uz_hospital"
 backend = "unrealzoo"
 map = "Hospital"
-viewpoints = ["fpv"]
+viewpoints = ["fpv", "tpv"]
 license = "research-only"
 tags = ["unrealzoo", "agent", "indoor"]
 
@@ -73,6 +73,6 @@ tags = ["unrealzoo", "agent", "indoor"]
 id = "uz_greekisland"
 backend = "unrealzoo"
 map = "Greek_Island"
-viewpoints = ["fpv"]
+viewpoints = ["fpv", "tpv"]
 license = "research-only"
 tags = ["unrealzoo", "agent", "outdoor", "landscape"]
