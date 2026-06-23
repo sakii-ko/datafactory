@@ -155,17 +155,24 @@ class UnrealZooBackend(CaptureBackend):
     def _agent_loc(self, c, name) -> np.ndarray:
         return np.array([float(x) for x in self._req(c, f"vget /object/{name}/location").split()])
 
-    def _nav_goal(self, c, name) -> list[float] | None:
-        r = self._req(c, f"vbp {name} generate_nav_goal {self.cfg.nav_radius:.0f} 0")
-        try:
-            g = json.loads(r).get("nav_goal", "")
-            xyz = [float(p.split("=")[1]) for p in g.split() if "=" in p]
-            return xyz if len(xyz) == 3 else None
-        except (json.JSONDecodeError, TypeError, ValueError, AttributeError):
-            return None  # navmesh sampling unavailable
+    def _nav_goal(self, c, name, tries: int = 1) -> list[float] | None:
+        # Retry: the navmesh can still be building (esp. under multi-instance load), so
+        # generate_nav_goal returns nothing for a while after a scene loads.
+        for _ in range(tries):
+            r = self._req(c, f"vbp {name} generate_nav_goal {self.cfg.nav_radius:.0f} 0")
+            try:
+                g = json.loads(r).get("nav_goal", "")
+                xyz = [float(p.split("=")[1]) for p in g.split() if "=" in p]
+                if len(xyz) == 3 and any(abs(v) > 1e-3 for v in xyz):
+                    return xyz
+            except (json.JSONDecodeError, TypeError, ValueError, AttributeError):
+                pass
+            if tries > 1:
+                time.sleep(2.0)
+        return None
 
     def _nav_start(self, c, name) -> None:
-        xyz = self._nav_goal(c, name)
+        xyz = self._nav_goal(c, name, tries=12)   # wait for the navmesh to finish building
         if xyz:
             self._req(c, f"vset /object/{name}/location {xyz[0]:.1f} {xyz[1]:.1f} {xyz[2]:.1f}")
 
@@ -236,7 +243,7 @@ class UnrealZooBackend(CaptureBackend):
         goal = None
         if navmesh:                              # autopilot toward navmesh goals (collision-free)
             self._req(c, f"vbp {name} set_nav_speed {self.cfg.nav_speed}")
-            goal = self._nav_goal(c, name)
+            goal = self._nav_goal(c, name, tries=12)   # wait for navmesh build (multi-instance load)
             if goal:
                 self._nav_to(c, name, goal)
 
