@@ -44,3 +44,35 @@ map = "DowntownWest"
 viewpoints = ["fpv"]
 license = "research-only"
 tags = ["unrealzoo", "agent", "urban"]
+
+[[scene]]
+id = "uz_suburb"
+backend = "unrealzoo"
+map = "SuburbNeighborhood_Day"   # UnrealZoo's primary navigation scene (has navmesh + safe_start)
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "suburb", "outdoor"]
+
+[[scene]]
+id = "uz_ancientruins"
+backend = "unrealzoo"
+map = "AncientRuins"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "outdoor", "ruins"]
+
+[[scene]]
+id = "uz_hospital"
+backend = "unrealzoo"
+map = "Hospital"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "indoor"]
+
+[[scene]]
+id = "uz_greekisland"
+backend = "unrealzoo"
+map = "Greek_Island"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "outdoor", "landscape"]

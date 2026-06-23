@@ -222,8 +222,10 @@ class UnrealZooBackend(CaptureBackend):
                     self._loaded_level = plan.map
                     self._agent_ready = False
                 self._setup_agent(c)
-            else:
-                self._nav_start(c, self.cfg.agent_name)   # warm reuse: re-randomise the start each episode
+            elif self.cfg.policy != "navmesh":
+                self._nav_start(c, self.cfg.agent_name)   # wander warm-reuse: re-randomise the start
+            # navmesh warm-reuse: leave the agent where it walked to (already on the navmesh) and let
+            # the loop pick a fresh goal — teleporting between episodes can land off-mesh -> autopilot stalls
         name, eye = self.cfg.agent_name, self._eye
 
         if not agent:                            # free-camera anchor (demo scene)
