@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import queue
+import re
 import signal
 import subprocess
 import threading
@@ -15,6 +16,26 @@ PORT_BASE, PORT_BAND = 9000, 8
 
 class EnvCrashed(RuntimeError):
     pass
+
+
+def discover_gpu_adapters() -> list[int]:
+    """Vulkan adapter indices that are discrete GPUs (skips llvmpipe/CPU). The order matches UE's
+    -graphicsadapter enumeration, so these indices are exactly what we pass to pin each env to a GPU."""
+    try:
+        out = subprocess.run(["xvfb-run", "-a", "vulkaninfo"], capture_output=True,
+                             text=True, timeout=90).stdout
+    except Exception:   # noqa: BLE001
+        return []
+    adapters, cur = [], -1
+    for line in out.splitlines():
+        m = re.match(r"\s*GPU(\d+):\s*$", line)
+        if m:
+            cur = int(m.group(1))
+        elif cur >= 0 and "deviceType" in line:
+            if "DISCRETE_GPU" in line:
+                adapters.append(cur)
+            cur = -1
+    return adapters
 
 
 def slot_layout(n_envs: int, adapters: list[int]) -> list[tuple[int, int]]:

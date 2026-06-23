@@ -40,7 +40,7 @@ def main(argv=None) -> int:
     r.add_argument("--viewpoints", default="tpv")
     r.add_argument("--seed", type=int, default=0)
     r.add_argument("--out", default="runs")
-    r.add_argument("--gpus", default="")
+    r.add_argument("--gpus", default="", help="comma vulkan-adapter indices, or 'auto' to discover A6000s")
     r.add_argument("--workers", type=int, default=1)
     r.add_argument("--scenes", default="", help="comma-separated scene ids from the content catalog")
     r.add_argument("--content", default=str(_REPO / "content"), help="content catalog dir")
@@ -74,7 +74,11 @@ def main(argv=None) -> int:
         viewpoints=tuple(Viewpoint(v.strip().lower()) for v in args.viewpoints.split(",")),
         seed=args.seed, out_root=args.out, scene_specs=scene_specs,
     )
-    gpus = [int(x) for x in args.gpus.split(",")] if args.gpus else None
+    if args.gpus == "auto":                    # discover discrete-GPU vulkan adapters (skip llvmpipe)
+        from .farm.pool import discover_gpu_adapters
+        gpus = discover_gpu_adapters() or None
+    else:
+        gpus = [int(x) for x in args.gpus.split(",")] if args.gpus else None
     binary = args.binary or (scene_specs[0].params.get("binary", "") if scene_specs else "")
     workers = args.workers
     if backend == "unrealzoo" and gpus:        # --gpus (vulkan adapter indices) => warm-pool fan-out
