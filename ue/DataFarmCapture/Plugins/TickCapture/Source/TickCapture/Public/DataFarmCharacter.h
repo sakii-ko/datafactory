@@ -18,10 +18,12 @@ class TICKCAPTURE_API ADataFarmCharacter : public ACharacter
 public:
 	ADataFarmCharacter();
 
-	// Load body SkeletalMesh + locomotion AnimBP and attach wardrobe parts. Empty paths are
-	// skipped (so a config with no mesh keeps the default capsule-only pawn). AnimBpPath may be
-	// the asset path ('/Game/.../ABP.ABP') or the generated class ('/Game/.../ABP.ABP_C').
-	void Configure(const FString& MeshPath, const FString& AnimBpPath, const TArray<FString>& Wardrobe);
+	// Load body SkeletalMesh + locomotion anim and attach wardrobe parts. Empty paths are skipped.
+	// AnimBpPath (preferred) may be the asset path ('/Game/.../ABP.ABP') or the generated class
+	// ('..._C'). If AnimBpPath is empty but AnimSeqPath is set, loop that single AnimSequence
+	// directly (single-node) — enough for a walking agent without authoring an AnimBP.
+	void Configure(const FString& MeshPath, const FString& AnimBpPath, const FString& AnimSeqPath,
+		const TArray<FString>& Wardrobe);
 
 	// World-space FPV eye viewpoint: head socket if present, else a forward+up offset from the
 	// capsule top. OutRotation is the yaw-only look rotation (matches unrealzoo's eye cam).

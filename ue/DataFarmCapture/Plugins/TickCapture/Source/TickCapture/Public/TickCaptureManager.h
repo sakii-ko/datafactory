@@ -15,7 +15,8 @@ struct FCharacterConfig
 {
 	FString Id;
 	FString Mesh;
-	FString AnimBp;
+	FString AnimBp;            // preferred: an AnimBlueprint
+	FString Anim;              // fallback: a single AnimSequence to loop (no AnimBP needed)
 	TArray<FString> Wardrobe;
 	bool IsSet() const { return !Mesh.IsEmpty(); }
 };

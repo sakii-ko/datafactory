@@ -6,6 +6,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Animation/AnimInstance.h"
+#include "Animation/AnimSequenceBase.h"
 #include "Misc/Paths.h"
 
 ADataFarmCharacter::ADataFarmCharacter()
@@ -34,7 +35,8 @@ ADataFarmCharacter::ADataFarmCharacter()
 	}
 }
 
-void ADataFarmCharacter::Configure(const FString& MeshPath, const FString& AnimBpPath, const TArray<FString>& Wardrobe)
+void ADataFarmCharacter::Configure(const FString& MeshPath, const FString& AnimBpPath, const FString& AnimSeqPath,
+	const TArray<FString>& Wardrobe)
 {
 	USkeletalMeshComponent* Body = GetMesh();
 	if (!Body)
@@ -78,6 +80,19 @@ void ADataFarmCharacter::Configure(const FString& MeshPath, const FString& AnimB
 		else
 		{
 			UE_LOG(LogTemp, Warning, TEXT("DataFarmCharacter: could not load AnimBP class %s"), *ClassPath);
+		}
+	}
+	else if (!AnimSeqPath.IsEmpty())
+	{
+		// No AnimBP: loop a single AnimSequence directly (single-node) — enough for a walking agent.
+		if (UAnimSequenceBase* Seq = LoadObject<UAnimSequenceBase>(nullptr, *AnimSeqPath))
+		{
+			Body->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+			Body->PlayAnimation(Seq, true);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("DataFarmCharacter: could not load anim sequence %s"), *AnimSeqPath);
 		}
 	}
 

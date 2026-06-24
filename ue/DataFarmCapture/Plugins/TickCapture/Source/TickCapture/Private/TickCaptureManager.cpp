@@ -86,7 +86,7 @@ void ATickCaptureManager::BeginPlay()
 				ADataFarmCharacter* Ch = W->SpawnActor<ADataFarmCharacter>(FVector(0, 0, 150), FRotator::ZeroRotator, SP);
 				if (Ch)
 				{
-					Ch->Configure(Cfg.Character.Mesh, Cfg.Character.AnimBp, Cfg.Character.Wardrobe);
+					Ch->Configure(Cfg.Character.Mesh, Cfg.Character.AnimBp, Cfg.Character.Anim, Cfg.Character.Wardrobe);
 					if (ADataFarmAIController* AI = Cast<ADataFarmAIController>(Ch->GetController()))
 					{
 						AI->InitExploration(Cfg.Seed);

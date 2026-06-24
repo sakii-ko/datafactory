@@ -60,6 +60,7 @@ void UTickCaptureSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 		(*CharObj)->TryGetStringField(TEXT("id"), Cfg.Character.Id);
 		(*CharObj)->TryGetStringField(TEXT("mesh"), Cfg.Character.Mesh);
 		(*CharObj)->TryGetStringField(TEXT("anim_bp"), Cfg.Character.AnimBp);
+		(*CharObj)->TryGetStringField(TEXT("anim"), Cfg.Character.Anim);   // single-sequence fallback
 		const TSharedPtr<FJsonObject>* Ward = nullptr;
 		if ((*CharObj)->TryGetObjectField(TEXT("wardrobe"), Ward) && Ward && Ward->IsValid())
 		{
