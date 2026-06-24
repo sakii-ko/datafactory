@@ -10,6 +10,8 @@ def spawn(cls, loc=(0, 0, 0), rot=(0, 0, 0)):
     return eas.spawn_actor_from_class(cls, unreal.Vector(*loc), unreal.Rotator(*rot))
 
 
+if unreal.EditorAssetLibrary.does_asset_exist("/Game/Maps/Capture"):
+    unreal.EditorAssetLibrary.delete_asset("/Game/Maps/Capture")   # new_level won't overwrite
 les.new_level("/Game/Maps/Capture")
 
 plane = unreal.EditorAssetLibrary.load_asset("/Engine/BasicShapes/Plane")
