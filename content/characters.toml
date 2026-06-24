@@ -1,0 +1,33 @@
+# Character registry — own-content (TickCapture) track. Adding a character = one [[character]] block.
+#   mesh     = UE skeletal mesh asset path
+#   anim_bp  = locomotion AnimBlueprint (retargeted to standard_rig)
+#   wardrobe = optional modular slots (top/pants/shoes/hair/hat) -> mesh paths; sampled per episode
+# UnrealZoo's research track does NOT use this (it gets 18 human + 28 animal looks via set_app);
+# this is for characters we IMPORT (UE5 Manny/Quinn now; Mixamo/Fab/Sketchfab once those land).
+
+[[character]]
+id = "manny"
+mesh = "/Game/Characters/Mannequins/Meshes/SKM_Manny.SKM_Manny"
+anim_bp = "/Game/Characters/Mannequins/ABP_Manny.ABP_Manny_C"
+standard_rig = "ue5_manny"
+license = "epic-eula"
+tags = ["humanoid", "engine-default"]
+
+[[character]]
+id = "quinn"
+mesh = "/Game/Characters/Mannequins/Meshes/SKM_Quinn.SKM_Quinn"
+anim_bp = "/Game/Characters/Mannequins/ABP_Quinn.ABP_Quinn_C"
+standard_rig = "ue5_manny"
+license = "epic-eula"
+tags = ["humanoid", "engine-default"]
+
+# Imported characters land here, e.g. (after retarget to ue5_manny via the DataFarmIngest commandlet):
+# [[character]]
+# id = "mixamo_ybot"
+# mesh = "/Game/DataFarm/Characters/ybot/SK_ybot.SK_ybot"
+# anim_bp = "/Game/DataFarm/Anim/ABP_Locomotion.ABP_Locomotion_C"
+# standard_rig = "ue5_manny"
+# license = "mixamo-free"
+# tags = ["humanoid", "mixamo"]
+# [character.wardrobe]
+# top = "/Game/DataFarm/Wardrobe/Tops/SK_jacket.SK_jacket"

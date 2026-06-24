@@ -21,6 +21,7 @@ class JobSpec:
     seed: int = 0
     out_root: str = "runs"
     scene_specs: tuple = ()   # resolved SceneSpec objects (from SceneCatalog); overrides scenes/viewpoints
+    character_specs: tuple = ()   # resolved CharacterSpec objects (own-track / ue backend only)
     extra: dict = field(default_factory=dict)
 
 
@@ -57,15 +58,20 @@ def default_plan(job: JobSpec) -> list[EpisodePlan]:
         if job.scene_specs:  # scene-catalog-driven: viewpoint/map come from the SceneSpec
             spec = job.scene_specs[i % len(job.scene_specs)]
             vps = spec.viewpoints or (Viewpoint.TPV,)
-            plans.append(EpisodePlan(
-                viewpoint=vps[i % len(vps)], scene_id=spec.id, map=spec.map, **common))
+            p = EpisodePlan(viewpoint=vps[i % len(vps)], scene_id=spec.id, map=spec.map, **common)
         else:
             vps = job.viewpoints or (Viewpoint.TPV,)
-            plans.append(EpisodePlan(
+            p = EpisodePlan(
                 viewpoint=vps[i % len(vps)],
                 scene_id=job.scenes[i % len(job.scenes)] if job.scenes else "",
                 character_id=job.characters[i % len(job.characters)] if job.characters else "",
-                **common))
+                **common)
+        if job.character_specs:   # own-track: assign an imported character (mesh+anim+wardrobe)
+            ch = job.character_specs[i % len(job.character_specs)]
+            p.character_id = ch.id
+            p.extra = {**p.extra, "character": {
+                "id": ch.id, "mesh": ch.mesh, "anim_bp": ch.anim_bp, "wardrobe": ch.wardrobe}}
+        plans.append(p)
     return plans
 
 

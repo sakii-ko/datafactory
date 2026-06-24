@@ -78,6 +78,8 @@ class UEBackend(CaptureBackend):
             "agent_bounds": float(self.cfg.agent_bounds),
             "orbit_test": bool(self.cfg.orbit_test) and not self.cfg.agent_mode,
         }
+        if plan.extra.get("character"):   # own-track character (TickCapture loads mesh+anim+wardrobe)
+            cfg["character"] = plan.extra["character"]
         cfg_path = out_dir / "render_config.json"
         cfg_path.write_text(json.dumps(cfg, indent=2))
         scene_map = plan.map or self.cfg.map_name
