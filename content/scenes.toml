@@ -76,3 +76,116 @@ map = "Greek_Island"
 viewpoints = ["fpv", "tpv"]
 license = "research-only"
 tags = ["unrealzoo", "agent", "outdoor", "landscape"]
+
+# --- diversity sweep: register a broad set; a validation run reveals which load + have navmesh ---
+[[scene]]
+id = "uz_tokyo"
+backend = "unrealzoo"
+map = "Tokyo"
+viewpoints = ["fpv", "tpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "urban"]
+
+[[scene]]
+id = "uz_venice"
+backend = "unrealzoo"
+map = "Venice"
+viewpoints = ["fpv", "tpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "urban", "water"]
+
+[[scene]]
+id = "uz_museum"
+backend = "unrealzoo"
+map = "Museum"
+viewpoints = ["fpv", "tpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "indoor"]
+
+[[scene]]
+id = "uz_castle"
+backend = "unrealzoo"
+map = "Medieval_Castle"
+viewpoints = ["fpv", "tpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "historical"]
+
+[[scene]]
+id = "uz_asiantemple"
+backend = "unrealzoo"
+map = "AsianTemple"
+viewpoints = ["fpv", "tpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "historical"]
+
+[[scene]]
+id = "uz_colosseum"
+backend = "unrealzoo"
+map = "Colosseum_Desert"
+viewpoints = ["fpv", "tpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "historical", "desert"]
+
+[[scene]]
+id = "uz_snow"
+backend = "unrealzoo"
+map = "SnowMap"
+viewpoints = ["fpv", "tpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "nature", "snow"]
+
+[[scene]]
+id = "uz_desert"
+backend = "unrealzoo"
+map = "DesertMap"
+viewpoints = ["fpv", "tpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "nature", "desert"]
+
+[[scene]]
+id = "uz_forest"
+backend = "unrealzoo"
+map = "StonePineForest"
+viewpoints = ["fpv", "tpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "nature", "forest"]
+
+[[scene]]
+id = "uz_industrial"
+backend = "unrealzoo"
+map = "IndustrialArea"
+viewpoints = ["fpv", "tpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "industrial"]
+
+[[scene]]
+id = "uz_opera"
+backend = "unrealzoo"
+map = "OperaHouse"
+viewpoints = ["fpv", "tpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "indoor"]
+
+[[scene]]
+id = "uz_supermarket"
+backend = "unrealzoo"
+map = "supermarket"
+viewpoints = ["fpv", "tpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "indoor"]
+
+[[scene]]
+id = "uz_wildwest"
+backend = "unrealzoo"
+map = "WildWest"
+viewpoints = ["fpv", "tpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "western"]
+
+[[scene]]
+id = "uz_scifi"
+backend = "unrealzoo"
+map = "ModularSciFiVillage"
+viewpoints = ["fpv", "tpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent", "scifi"]
