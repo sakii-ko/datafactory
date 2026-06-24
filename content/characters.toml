@@ -37,3 +37,667 @@ tags = ["humanoid", "mixamo"]
 # Add more with: scripts/fetch_character.sh <id> <glb_url>   (downloads + Interchange-imports +
 # prints the mesh/anim object paths to paste here). Mixamo/Fab characters: import the FBX via
 # ue/scripts/import_character.py once you've provided them (docs/own-track-assets.md).
+
+[[character]]
+id = "abe"
+mesh = "/Game/DataFarm/Characters/abe/character.character"
+anim = "/Game/DataFarm/Characters/abe/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "aj"
+mesh = "/Game/DataFarm/Characters/aj/character.character"
+anim = "/Game/DataFarm/Characters/aj/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "akai_e_espiritu"
+mesh = "/Game/DataFarm/Characters/akai_e_espiritu/character.character"
+anim = "/Game/DataFarm/Characters/akai_e_espiritu/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "alex"
+mesh = "/Game/DataFarm/Characters/alex/character.character"
+anim = "/Game/DataFarm/Characters/alex/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "alien_soldier"
+mesh = "/Game/DataFarm/Characters/alien_soldier/character.character"
+anim = "/Game/DataFarm/Characters/alien_soldier/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "amy"
+mesh = "/Game/DataFarm/Characters/amy/character.character"
+anim = "/Game/DataFarm/Characters/amy/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "arissa"
+mesh = "/Game/DataFarm/Characters/arissa/character.character"
+anim = "/Game/DataFarm/Characters/arissa/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "astra"
+mesh = "/Game/DataFarm/Characters/astra/character.character"
+anim = "/Game/DataFarm/Characters/astra/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "big_vegas"
+mesh = "/Game/DataFarm/Characters/big_vegas/character.character"
+anim = "/Game/DataFarm/Characters/big_vegas/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "brady"
+mesh = "/Game/DataFarm/Characters/brady/character.character"
+anim = "/Game/DataFarm/Characters/brady/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "brian"
+mesh = "/Game/DataFarm/Characters/brian/character.character"
+anim = "/Game/DataFarm/Characters/brian/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "brute"
+mesh = "/Game/DataFarm/Characters/brute/character.character"
+anim = "/Game/DataFarm/Characters/brute/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "bryce"
+mesh = "/Game/DataFarm/Characters/bryce/character.character"
+anim = "/Game/DataFarm/Characters/bryce/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "castle_guard_01"
+mesh = "/Game/DataFarm/Characters/castle_guard_01/character.character"
+anim = "/Game/DataFarm/Characters/castle_guard_01/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "chad"
+mesh = "/Game/DataFarm/Characters/chad/character.character"
+anim = "/Game/DataFarm/Characters/chad/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "claire"
+mesh = "/Game/DataFarm/Characters/claire/character.character"
+anim = "/Game/DataFarm/Characters/claire/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "copzombie_l_actisdato"
+mesh = "/Game/DataFarm/Characters/copzombie_l_actisdato/character.character"
+anim = "/Game/DataFarm/Characters/copzombie_l_actisdato/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "crypto"
+mesh = "/Game/DataFarm/Characters/crypto/character.character"
+anim = "/Game/DataFarm/Characters/crypto/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "demon_t_wiezzorek"
+mesh = "/Game/DataFarm/Characters/demon_t_wiezzorek/character.character"
+anim = "/Game/DataFarm/Characters/demon_t_wiezzorek/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "doozy"
+mesh = "/Game/DataFarm/Characters/doozy/character.character"
+anim = "/Game/DataFarm/Characters/doozy/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "drake"
+mesh = "/Game/DataFarm/Characters/drake/character.character"
+anim = "/Game/DataFarm/Characters/drake/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "dummy"
+mesh = "/Game/DataFarm/Characters/dummy/character.character"
+anim = "/Game/DataFarm/Characters/dummy/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "elizabeth"
+mesh = "/Game/DataFarm/Characters/elizabeth/character.character"
+anim = "/Game/DataFarm/Characters/elizabeth/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "erika_archer_with_bowarrow"
+mesh = "/Game/DataFarm/Characters/erika_archer_with_bowarrow/character.character"
+anim = "/Game/DataFarm/Characters/erika_archer_with_bowarrow/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "exo_gray"
+mesh = "/Game/DataFarm/Characters/exo_gray/character.character"
+anim = "/Game/DataFarm/Characters/exo_gray/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "exo_red"
+mesh = "/Game/DataFarm/Characters/exo_red/character.character"
+anim = "/Game/DataFarm/Characters/exo_red/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "ganfaul_m_aure"
+mesh = "/Game/DataFarm/Characters/ganfaul_m_aure/character.character"
+anim = "/Game/DataFarm/Characters/ganfaul_m_aure/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "heraklios_by_a_dizon"
+mesh = "/Game/DataFarm/Characters/heraklios_by_a_dizon/character.character"
+anim = "/Game/DataFarm/Characters/heraklios_by_a_dizon/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "jackie"
+mesh = "/Game/DataFarm/Characters/jackie/character.character"
+anim = "/Game/DataFarm/Characters/jackie/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "james"
+mesh = "/Game/DataFarm/Characters/james/character.character"
+anim = "/Game/DataFarm/Characters/james/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "jennifer"
+mesh = "/Game/DataFarm/Characters/jennifer/character.character"
+anim = "/Game/DataFarm/Characters/jennifer/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "jody"
+mesh = "/Game/DataFarm/Characters/jody/character.character"
+anim = "/Game/DataFarm/Characters/jody/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "joe"
+mesh = "/Game/DataFarm/Characters/joe/character.character"
+anim = "/Game/DataFarm/Characters/joe/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "jones"
+mesh = "/Game/DataFarm/Characters/jones/character.character"
+anim = "/Game/DataFarm/Characters/jones/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "kachujin_g_rosales"
+mesh = "/Game/DataFarm/Characters/kachujin_g_rosales/character.character"
+anim = "/Game/DataFarm/Characters/kachujin_g_rosales/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "kate"
+mesh = "/Game/DataFarm/Characters/kate/character.character"
+anim = "/Game/DataFarm/Characters/kate/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "kaya"
+mesh = "/Game/DataFarm/Characters/kaya/character.character"
+anim = "/Game/DataFarm/Characters/kaya/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "knight_d_pelegrini"
+mesh = "/Game/DataFarm/Characters/knight_d_pelegrini/character.character"
+anim = "/Game/DataFarm/Characters/knight_d_pelegrini/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "leonard"
+mesh = "/Game/DataFarm/Characters/leonard/character.character"
+anim = "/Game/DataFarm/Characters/leonard/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "lewis"
+mesh = "/Game/DataFarm/Characters/lewis/character.character"
+anim = "/Game/DataFarm/Characters/lewis/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "lola_b_styperek"
+mesh = "/Game/DataFarm/Characters/lola_b_styperek/character.character"
+anim = "/Game/DataFarm/Characters/lola_b_styperek/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "louise"
+mesh = "/Game/DataFarm/Characters/louise/character.character"
+anim = "/Game/DataFarm/Characters/louise/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "mannequin"
+mesh = "/Game/DataFarm/Characters/mannequin/character.character"
+anim = "/Game/DataFarm/Characters/mannequin/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "maria_j_j_ong"
+mesh = "/Game/DataFarm/Characters/maria_j_j_ong/character.character"
+anim = "/Game/DataFarm/Characters/maria_j_j_ong/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "maria_wprop_j_j_ong"
+mesh = "/Game/DataFarm/Characters/maria_wprop_j_j_ong/character.character"
+anim = "/Game/DataFarm/Characters/maria_wprop_j_j_ong/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "maynard"
+mesh = "/Game/DataFarm/Characters/maynard/character.character"
+anim = "/Game/DataFarm/Characters/maynard/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "medea_by_m_arrebola"
+mesh = "/Game/DataFarm/Characters/medea_by_m_arrebola/character.character"
+anim = "/Game/DataFarm/Characters/medea_by_m_arrebola/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "megan"
+mesh = "/Game/DataFarm/Characters/megan/character.character"
+anim = "/Game/DataFarm/Characters/megan/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "michelle"
+mesh = "/Game/DataFarm/Characters/michelle/character.character"
+anim = "/Game/DataFarm/Characters/michelle/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "morak"
+mesh = "/Game/DataFarm/Characters/morak/character.character"
+anim = "/Game/DataFarm/Characters/morak/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "mousey"
+mesh = "/Game/DataFarm/Characters/mousey/character.character"
+anim = "/Game/DataFarm/Characters/mousey/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "mremireh_o_desbiens"
+mesh = "/Game/DataFarm/Characters/mremireh_o_desbiens/character.character"
+anim = "/Game/DataFarm/Characters/mremireh_o_desbiens/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "mutant"
+mesh = "/Game/DataFarm/Characters/mutant/character.character"
+anim = "/Game/DataFarm/Characters/mutant/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "nightshade_j_friedrich"
+mesh = "/Game/DataFarm/Characters/nightshade_j_friedrich/character.character"
+anim = "/Game/DataFarm/Characters/nightshade_j_friedrich/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "ninja"
+mesh = "/Game/DataFarm/Characters/ninja/character.character"
+anim = "/Game/DataFarm/Characters/ninja/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "olivia"
+mesh = "/Game/DataFarm/Characters/olivia/character.character"
+anim = "/Game/DataFarm/Characters/olivia/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "ortiz"
+mesh = "/Game/DataFarm/Characters/ortiz/character.character"
+anim = "/Game/DataFarm/Characters/ortiz/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "paladin_wprop_j_nordstrom"
+mesh = "/Game/DataFarm/Characters/paladin_wprop_j_nordstrom/character.character"
+anim = "/Game/DataFarm/Characters/paladin_wprop_j_nordstrom/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "parasite_l_starkie"
+mesh = "/Game/DataFarm/Characters/parasite_l_starkie/character.character"
+anim = "/Game/DataFarm/Characters/parasite_l_starkie/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "passive_marker_man"
+mesh = "/Game/DataFarm/Characters/passive_marker_man/character.character"
+anim = "/Game/DataFarm/Characters/passive_marker_man/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "peasant_man"
+mesh = "/Game/DataFarm/Characters/peasant_man/character.character"
+anim = "/Game/DataFarm/Characters/peasant_man/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "pete"
+mesh = "/Game/DataFarm/Characters/pete/character.character"
+anim = "/Game/DataFarm/Characters/pete/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "prisoner_b_styperek"
+mesh = "/Game/DataFarm/Characters/prisoner_b_styperek/character.character"
+anim = "/Game/DataFarm/Characters/prisoner_b_styperek/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "pumpkinhulk_l_shaw"
+mesh = "/Game/DataFarm/Characters/pumpkinhulk_l_shaw/character.character"
+anim = "/Game/DataFarm/Characters/pumpkinhulk_l_shaw/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "roth"
+mesh = "/Game/DataFarm/Characters/roth/character.character"
+anim = "/Game/DataFarm/Characters/roth/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "skeletonzombie_t_avelange"
+mesh = "/Game/DataFarm/Characters/skeletonzombie_t_avelange/character.character"
+anim = "/Game/DataFarm/Characters/skeletonzombie_t_avelange/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "sophie"
+mesh = "/Game/DataFarm/Characters/sophie/character.character"
+anim = "/Game/DataFarm/Characters/sophie/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "sporty_granny"
+mesh = "/Game/DataFarm/Characters/sporty_granny/character.character"
+anim = "/Game/DataFarm/Characters/sporty_granny/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "steve"
+mesh = "/Game/DataFarm/Characters/steve/character.character"
+anim = "/Game/DataFarm/Characters/steve/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "survivor_a_lusth"
+mesh = "/Game/DataFarm/Characters/survivor_a_lusth/character.character"
+anim = "/Game/DataFarm/Characters/survivor_a_lusth/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "suzie"
+mesh = "/Game/DataFarm/Characters/suzie/character.character"
+anim = "/Game/DataFarm/Characters/suzie/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "swat"
+mesh = "/Game/DataFarm/Characters/swat/character.character"
+anim = "/Game/DataFarm/Characters/swat/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "swat_guy"
+mesh = "/Game/DataFarm/Characters/swat_guy/character.character"
+anim = "/Game/DataFarm/Characters/swat_guy/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "the_boss"
+mesh = "/Game/DataFarm/Characters/the_boss/character.character"
+anim = "/Game/DataFarm/Characters/the_boss/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "timmy"
+mesh = "/Game/DataFarm/Characters/timmy/character.character"
+anim = "/Game/DataFarm/Characters/timmy/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "ty"
+mesh = "/Game/DataFarm/Characters/ty/character.character"
+anim = "/Game/DataFarm/Characters/ty/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "uriel_a_plotexia"
+mesh = "/Game/DataFarm/Characters/uriel_a_plotexia/character.character"
+anim = "/Game/DataFarm/Characters/uriel_a_plotexia/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "vampire_a_lusth"
+mesh = "/Game/DataFarm/Characters/vampire_a_lusth/character.character"
+anim = "/Game/DataFarm/Characters/vampire_a_lusth/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "vanguard_by_t_choonyung"
+mesh = "/Game/DataFarm/Characters/vanguard_by_t_choonyung/character.character"
+anim = "/Game/DataFarm/Characters/vanguard_by_t_choonyung/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "warzombie_f_pedroso"
+mesh = "/Game/DataFarm/Characters/warzombie_f_pedroso/character.character"
+anim = "/Game/DataFarm/Characters/warzombie_f_pedroso/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "whiteclown_n_hallin"
+mesh = "/Game/DataFarm/Characters/whiteclown_n_hallin/character.character"
+anim = "/Game/DataFarm/Characters/whiteclown_n_hallin/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "x_bot"
+mesh = "/Game/DataFarm/Characters/x_bot/character.character"
+anim = "/Game/DataFarm/Characters/x_bot/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
+[[character]]
+id = "y_bot"
+mesh = "/Game/DataFarm/Characters/y_bot/character.character"
+anim = "/Game/DataFarm/Characters/y_bot/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]

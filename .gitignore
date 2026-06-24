@@ -33,3 +33,12 @@ ue/**/Content/Imported/
 
 # downloaded character assets (Mixamo = account-licensed; CC-BY = attribution) — registry holds the URLs, not the binaries
 assets_in/
+
+# UE imported character/scene content (licensed/large/regenerable from the FBX + import) + build artifacts
+ue/DataFarmCapture/Content/DataFarm/
+ue/DataFarmCapture/Intermediate/
+ue/DataFarmCapture/Saved/
+ue/DataFarmCapture/DerivedDataCache/
+ue/DataFarmCapture/Binaries/
+ue/DataFarmCapture/Plugins/*/Binaries/
+ue/DataFarmCapture/Plugins/*/Intermediate/

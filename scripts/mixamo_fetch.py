@@ -33,9 +33,10 @@ def _req(url, data=None):
 
 
 def search(query, typ):
-    q = urllib.parse.urlencode({"page": 1, "limit": 1, "type": typ, "query": query})
+    q = urllib.parse.urlencode({"page": 1, "limit": 16, "type": typ, "query": query})
     res = _req(f"{API}/products?{q}").get("results", [])
-    return res[0] if res else None
+    exact = [r for r in res if r["name"].lower() == query.lower()]   # prefer an exact-name hit
+    return (exact or res)[0] if res else None
 
 
 def export_and_wait(char_id, body):
