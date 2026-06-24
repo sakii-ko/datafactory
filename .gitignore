@@ -30,3 +30,6 @@ ue/**/Content/Imported/
 # env / secrets
 .env
 *.local
+
+# downloaded character assets (Mixamo = account-licensed; CC-BY = attribution) — registry holds the URLs, not the binaries
+assets_in/
