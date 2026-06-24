@@ -28,6 +28,8 @@ for d in sorted(glob.glob(os.path.join(root, "*"))):
     walk = os.path.join(d, "walking.fbx")
     if not os.path.exists(char) or not os.path.exists(walk):
         continue   # only fully-fetched characters (mesh + walk anim)
+    if os.path.exists(os.path.join(d, ".imported")):
+        continue   # incremental: skip ones already imported in a prior wave
     dest = f"/Game/DataFarm/Characters/{cid}"
     mui = unreal.FbxImportUI()
     mui.import_mesh = True
@@ -57,6 +59,7 @@ for d in sorted(glob.glob(os.path.join(root, "*"))):
         ap = [str(x) for x in t.imported_object_paths]
         anim = ap[0] if ap else None
     unreal.EditorAssetLibrary.save_directory(dest)
+    open(os.path.join(d, ".imported"), "w").close()   # mark done (incremental re-runs skip it)
     results.append({"id": cid, "mesh": mesh, "anim": anim})
     unreal.log(f"[batch] {cid}: mesh={mesh} anim={anim}")
 

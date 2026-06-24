@@ -65,10 +65,13 @@ def main():
     assert ch, f"no character matching {char_q!r}"
     cid, cname = ch["id"], ch["name"]
     print(f"character: {cname} ({cid})")
-    url = export_and_wait(cid, {
-        "character_id": cid, "type": "Character", "product_name": cname,
-        "preferences": {"format": "fbx7_2019", "skin": "true", "fps": "30", "reducekf": "0"}})
-    print(f"  character.fbx <- {download(url, f'{out}/character.fbx')} bytes")
+    if os.path.exists(f"{out}/character.fbx"):
+        print("  character.fbx exists -> skip char export (anims-only)")
+    else:
+        url = export_and_wait(cid, {
+            "character_id": cid, "type": "Character", "product_name": cname,
+            "preferences": {"format": "fbx7_2019", "skin": "true", "fps": "30", "reducekf": "0"}})
+        print(f"  character.fbx <- {download(url, f'{out}/character.fbx')} bytes")
     for aq in anims:
         m = search(aq, "Motion")
         if not m:
