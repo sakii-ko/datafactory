@@ -40,7 +40,7 @@ mesh_ui.import_textures = True
 mesh_ui.set_editor_property("mesh_type_to_import", unreal.FBXImportType.FBXIT_SKELETAL_MESH)
 mesh_task = _task(char_fbx, dest, mesh_ui)
 tools.import_asset_tasks([mesh_task])
-unreal.log(f"[char] mesh import -> {list(mesh_task.get_objects_paths())}")
+unreal.log(f"[char] mesh import -> {list(mesh_task.imported_object_paths)}")
 
 skeleton = mesh = None
 for p in unreal.EditorAssetLibrary.list_assets(dest, recursive=True) or []:
@@ -62,7 +62,7 @@ for fb in anim_fbxs:
         a_ui.set_editor_property("skeleton", unreal.EditorAssetLibrary.load_asset(skeleton))
     a_task = _task(fb, dest + "/Anim", a_ui)
     tools.import_asset_tasks([a_task])
-    anim_paths += [str(x) for x in a_task.get_objects_paths()]
+    anim_paths += [str(x) for x in a_task.imported_object_paths]
 
 unreal.EditorAssetLibrary.save_directory(dest)
 

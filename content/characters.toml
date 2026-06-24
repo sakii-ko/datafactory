@@ -25,6 +25,15 @@ standard_rig = "brainstem"
 license = "CC-BY-4.0"
 tags = ["robot", "cc0-sample"]
 
+# --- Mixamo (fetched via scripts/mixamo_fetch.py with your token, imported by import_character.py) ---
+[[character]]
+id = "remy"
+mesh = "/Game/DataFarm/Characters/remy/character.character"
+anim = "/Game/DataFarm/Characters/remy/Anim/walking.walking"
+standard_rig = "mixamorig"
+license = "mixamo-account"
+tags = ["humanoid", "mixamo"]
+
 # Add more with: scripts/fetch_character.sh <id> <glb_url>   (downloads + Interchange-imports +
 # prints the mesh/anim object paths to paste here). Mixamo/Fab characters: import the FBX via
 # ue/scripts/import_character.py once you've provided them (docs/own-track-assets.md).
