@@ -280,16 +280,24 @@ class UnrealZooBackend(CaptureBackend):
 
         tpv = agent and plan.viewpoint == Viewpoint.TPV
         cam_loc = cam_yaw = None   # TPV smooth-follow camera state (lerps toward the behind-agent target)
+        recent = []                # recent positions, for stuck-detection
         steps = []
         v_ang = 0.0
         for i in range(plan.steps):
             if navmesh:                          # agent autopilots its navmesh path; we just sample
                 time.sleep(self.cfg.frame_dt)
                 loc, yaw = self._agent_pose(c, name)
-                if goal is None or float(np.hypot(loc[0] - goal[0], loc[1] - goal[1])) < self.cfg.goal_reach:
+                recent.append((loc[0], loc[1]))
+                if len(recent) > 8:
+                    recent.pop(0)
+                stuck = (len(recent) == 8 and
+                         float(np.hypot(recent[-1][0] - recent[0][0], recent[-1][1] - recent[0][1])) < 40)
+                if (goal is None or stuck
+                        or float(np.hypot(loc[0] - goal[0], loc[1] - goal[1])) < self.cfg.goal_reach):
                     goal = self._explore_goal(c, name, loc)   # farthest-of-K -> explore, don't loop
                     if goal:
                         self._nav_to(c, name, goal)
+                    recent.clear()
             elif agent:                          # manual wander
                 hit = self._hit(c, name)
                 v_ang = (rng.choice([-1.0, 1.0]) * self.cfg.turn_max if hit
