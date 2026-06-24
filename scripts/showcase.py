@@ -34,52 +34,41 @@ def _grid(cells, out, cols, title, tw, th):
     print("wrote", out, f"({len(cells)} cells)")
 
 
-def _req(c, cmd, timeout=20):
-    try:
-        return c.request(cmd, timeout=timeout)
-    except TypeError:        # older unrealcv: request() has no timeout kwarg
-        return c.request(cmd)
-
-
 def lineup(a):
-    from unrealcv import Client
-    c = Client((a.host, a.port)); c.connect(timeout=20)
-    for _ in range(40):      # ready-gate: wait until the env answers status (else early cmds hang)
-        try:
-            if _req(c, "vget /unrealcv/status", 8):
-                break
-        except Exception:  # noqa: BLE001
-            pass
-        time.sleep(2)
+    from datafarm.backends.unrealzoo import UnrealZooBackend, UnrealZooConfig
+    be = UnrealZooBackend(UnrealZooConfig(host=a.host, port=a.port))
+    be.open(180)                                         # reconnect-until-ready gate (proven path)
+    c = be._connect()
+    req = lambda cmd: be._req(c, cmd)                    # noqa: E731 — backend retry+timeout handling
     for cmd in ("vrun r.EyeAdaptationQuality 0", "vrun r.EyeAdaptation.MethodOverride 2"):
-        _req(c, cmd)
+        req(cmd)
     if a.scene:
-        _req(c, f"vset /action/game/level {a.scene}", 60); time.sleep(12)
-    _req(c, "vset /objects/spawn_from_path /Game/SmartLocomotion/Blueprints/BP_Character.BP_Character_C sc")
-    _req(c, "vbp sc set_phy 0")
+        req(f"vset /action/game/level {a.scene}"); time.sleep(12)
+    req("vset /objects/spawn_from_path /Game/SmartLocomotion/Blueprints/BP_Character.BP_Character_C sc")
+    req("vbp sc set_phy 0")
     for _ in range(12):                                  # teleport to a navmesh point (clear ground)
-        r = _req(c, "vbp sc generate_nav_goal 8000 0")
+        r = req("vbp sc generate_nav_goal 8000 0")
         try:
             xyz = [float(p.split("=")[1]) for p in json.loads(r).get("nav_goal", "").split() if "=" in p]
             if len(xyz) == 3:
-                _req(c, f"vset /object/sc/location {xyz[0]} {xyz[1]} {xyz[2]}"); break
+                req(f"vset /object/sc/location {xyz[0]} {xyz[1]} {xyz[2]}"); break
         except Exception:  # noqa: BLE001
             pass
         time.sleep(2)
     time.sleep(1)
-    loc = [float(x) for x in _req(c, "vget /object/sc/location").split()]
-    yawd = float(_req(c, "vget /object/sc/rotation").split()[1]); yaw = np.deg2rad(yawd)
+    loc = [float(x) for x in req("vget /object/sc/location").split()]
+    yawd = float(req("vget /object/sc/rotation").split()[1]); yaw = np.deg2rad(yawd)
     fwd = np.array([np.cos(yaw), np.sin(yaw)])
     cam = (loc[0] + a.dist * fwd[0], loc[1] + a.dist * fwd[1], loc[2] + a.height)   # in front of agent
-    _req(c, f"vset /camera/0/location {cam[0]:.1f} {cam[1]:.1f} {cam[2]:.1f}")
-    _req(c, f"vset /camera/0/rotation -6 {yawd + 180:.1f} 0")                       # look back at its front
+    req(f"vset /camera/0/location {cam[0]:.1f} {cam[1]:.1f} {cam[2]:.1f}")
+    req(f"vset /camera/0/rotation -6 {yawd + 180:.1f} 0")                           # look back at its front
     cells = []
     for app in range(a.lo, a.hi):
-        _req(c, f"vbp sc set_app {app}"); time.sleep(0.3)
-        d = _req(c, "vget /camera/0/lit png")
+        req(f"vbp sc set_app {app}"); time.sleep(0.3)
+        d = req("vget /camera/0/lit png")
         if isinstance(d, (bytes, bytearray)):
             cells.append((f"app {app}", Image.open(io.BytesIO(d)).convert("RGB")))
-    c.disconnect()
+    be.close()
     _grid(cells, a.out, a.cols, f"CHARACTERS - set_app {a.lo}..{a.hi - 1} ({a.scene or 'current'})", 220, 248)
 
 
