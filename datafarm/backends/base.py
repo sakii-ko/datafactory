@@ -70,7 +70,8 @@ def default_plan(job: JobSpec) -> list[EpisodePlan]:
             ch = job.character_specs[i % len(job.character_specs)]
             p.character_id = ch.id
             p.extra = {**p.extra, "character": {
-                "id": ch.id, "mesh": ch.mesh, "anim_bp": ch.anim_bp, "wardrobe": ch.wardrobe}}
+                "id": ch.id, "mesh": ch.mesh, "anim_bp": ch.anim_bp, "anim": ch.anim,
+                "wardrobe": ch.wardrobe}}
         plans.append(p)
     return plans
 

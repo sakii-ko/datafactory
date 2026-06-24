@@ -43,6 +43,7 @@ def main(argv=None) -> int:
     r.add_argument("--gpus", default="", help="comma vulkan-adapter indices, or 'auto' to discover A6000s")
     r.add_argument("--workers", type=int, default=1)
     r.add_argument("--scenes", default="", help="comma-separated scene ids from the content catalog")
+    r.add_argument("--characters", default="", help="comma-separated character ids (content/characters.toml; own-track)")
     r.add_argument("--content", default=str(_REPO / "content"), help="content catalog dir")
     r.add_argument("--binary", default="", help="UnrealZoo launcher .sh path (warm-pool fan-out)")
     r.add_argument("--envs", type=int, default=0, help="warm envs for fan-out; 0 => len(gpus)")
@@ -68,11 +69,18 @@ def main(argv=None) -> int:
             p.error(f"--scenes span multiple backends {backends}; run one backend at a time")
         backend = backends.pop()  # scene catalog drives the backend
         scene_specs = tuple(specs)
+    character_specs = ()
+    if args.characters:           # own-track: imported characters drive the ue backend
+        from .characters import CharacterCatalog
+        character_specs = tuple(CharacterCatalog(args.content).resolve(
+            [c.strip() for c in args.characters.split(",")]))
+        if backend == "mock":
+            backend = "ue"
     job = JobSpec(
         name=args.name, backend=backend, num_episodes=args.episodes,
         steps_per_episode=args.steps, fps=args.fps, resolution=(w, h),
         viewpoints=tuple(Viewpoint(v.strip().lower()) for v in args.viewpoints.split(",")),
-        seed=args.seed, out_root=args.out, scene_specs=scene_specs,
+        seed=args.seed, out_root=args.out, scene_specs=scene_specs, character_specs=character_specs,
     )
     if args.gpus == "auto":                    # discover discrete-GPU vulkan adapters (skip llvmpipe)
         from .farm.pool import discover_gpu_adapters

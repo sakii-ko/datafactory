@@ -16,9 +16,11 @@ class CharacterSpec:
     its character variety from set_app instead; this registry is for characters we import.)"""
     id: str
     mesh: str = ""                 # UE skeletal mesh asset path (/Game/...)
-    anim_bp: str = ""              # locomotion AnimBlueprint path
+    anim_bp: str = ""              # locomotion AnimBlueprint path (preferred)
+    anim: str = ""                 # single AnimSequence to loop (fallback when no anim_bp)
     standard_rig: str = "ue5_manny"
     wardrobe: dict = field(default_factory=dict)   # slot -> mesh path (top/pants/shoes/hair/hat)
+    url: str = ""                  # CC0 source (glTF/GLB) for autonomous fetch+ingest
     license: str = ""
     tags: tuple[str, ...] = ()
     source: str = ""
@@ -26,9 +28,9 @@ class CharacterSpec:
 
 def _spec_from_toml(e: dict, source: str) -> CharacterSpec:
     return CharacterSpec(
-        id=e["id"], mesh=e.get("mesh", ""), anim_bp=e.get("anim_bp", ""),
+        id=e["id"], mesh=e.get("mesh", ""), anim_bp=e.get("anim_bp", ""), anim=e.get("anim", ""),
         standard_rig=e.get("standard_rig", "ue5_manny"), wardrobe=e.get("wardrobe", {}),
-        license=e.get("license", ""), tags=tuple(e.get("tags", [])), source=source,
+        url=e.get("url", ""), license=e.get("license", ""), tags=tuple(e.get("tags", [])), source=source,
     )
 
 

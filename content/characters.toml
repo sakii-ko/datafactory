@@ -1,33 +1,21 @@
 # Character registry — own-content (TickCapture) track. Adding a character = one [[character]] block.
-#   mesh     = UE skeletal mesh asset path
-#   anim_bp  = locomotion AnimBlueprint (retargeted to standard_rig)
+#   url      = CC0 source glTF/GLB for autonomous fetch+ingest (scripts/fetch_character.sh <id> <url>)
+#   mesh     = UE skeletal mesh asset path (filled in after ingest)
+#   anim_bp  = locomotion AnimBlueprint (preferred) ; anim = single AnimSequence to loop (fallback)
 #   wardrobe = optional modular slots (top/pants/shoes/hair/hat) -> mesh paths; sampled per episode
-# UnrealZoo's research track does NOT use this (it gets 18 human + 28 animal looks via set_app);
-# this is for characters we IMPORT (UE5 Manny/Quinn now; Mixamo/Fab/Sketchfab once those land).
+# This is for characters we IMPORT (self-sourced CC0 below; Mixamo/Fab need your login).
+# The UnrealZoo research track does NOT use this (it gets 18 human + 28 animal looks via set_app).
 
+# --- self-sourced CC0 (fetched + ingested autonomously, no login) ---
 [[character]]
-id = "manny"
-mesh = "/Game/Characters/Mannequins/Meshes/SKM_Manny.SKM_Manny"
-anim_bp = "/Game/Characters/Mannequins/ABP_Manny.ABP_Manny_C"
-standard_rig = "ue5_manny"
-license = "epic-eula"
-tags = ["humanoid", "engine-default"]
+id = "cesiumman"
+url = "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CesiumMan/glTF-Binary/CesiumMan.glb"
+mesh = "/Game/DataFarm/Characters/cesiumman/CesiumMan.CesiumMan"
+anim = "/Game/DataFarm/Characters/cesiumman/CesiumMan_Anim.CesiumMan_Anim"
+standard_rig = "cesiumman"
+license = "CC-BY-4.0"
+tags = ["humanoid", "cc0-sample"]
 
-[[character]]
-id = "quinn"
-mesh = "/Game/Characters/Mannequins/Meshes/SKM_Quinn.SKM_Quinn"
-anim_bp = "/Game/Characters/Mannequins/ABP_Quinn.ABP_Quinn_C"
-standard_rig = "ue5_manny"
-license = "epic-eula"
-tags = ["humanoid", "engine-default"]
-
-# Imported characters land here, e.g. (after retarget to ue5_manny via the DataFarmIngest commandlet):
-# [[character]]
-# id = "mixamo_ybot"
-# mesh = "/Game/DataFarm/Characters/ybot/SK_ybot.SK_ybot"
-# anim_bp = "/Game/DataFarm/Anim/ABP_Locomotion.ABP_Locomotion_C"
-# standard_rig = "ue5_manny"
-# license = "mixamo-free"
-# tags = ["humanoid", "mixamo"]
-# [character.wardrobe]
-# top = "/Game/DataFarm/Wardrobe/Tops/SK_jacket.SK_jacket"
+# Add more with: scripts/fetch_character.sh <id> <glb_url>   (downloads + Interchange-imports +
+# prints the mesh/anim object paths to paste here). Mixamo/Fab characters: import the FBX via
+# ue/scripts/import_character.py once you've provided them (docs/own-track-assets.md).

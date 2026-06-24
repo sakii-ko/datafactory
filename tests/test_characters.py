@@ -46,4 +46,5 @@ def test_default_plan_assigns_character(tmp_path):
 
 def test_repo_characters_load():
     c = CharacterCatalog(Path(__file__).resolve().parents[1] / "content")
-    assert c.get("manny").standard_rig == "ue5_manny"
+    cm = c.get("cesiumman")               # self-sourced CC0 char (fetched + ingested autonomously)
+    assert cm.mesh and cm.anim and cm.url  # has imported asset paths + a fetch URL
