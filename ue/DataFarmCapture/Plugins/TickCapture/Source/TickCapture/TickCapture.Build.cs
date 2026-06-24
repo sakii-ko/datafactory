@@ -8,7 +8,8 @@ public class TickCapture : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine" });
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
-			"RHI", "RenderCore", "ImageWrapper", "Json", "Projects"
+			"RHI", "RenderCore", "ImageWrapper", "Json", "Projects",
+			"NavigationSystem", "AIModule"
 		});
 	}
 }

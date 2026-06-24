@@ -26,6 +26,8 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Math/RandomStream.h"
 #include "ExplorerCharacter.h"
+#include "DataFarmCharacter.h"
+#include "DataFarmAIController.h"
 
 ATickCaptureManager::ATickCaptureManager()
 {
@@ -78,12 +80,31 @@ void ATickCaptureManager::BeginPlay()
 		{
 			FActorSpawnParameters SP;
 			SP.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-			AExplorerCharacter* Ch = W->SpawnActor<AExplorerCharacter>(FVector(0, 0, 150), FRotator::ZeroRotator, SP);
-			if (Ch)
+			if (Cfg.Character.IsSet())
 			{
-				Ch->Init(Cfg.Seed, Cfg.AgentBounds);
-				Agent = Ch;
-				TrackedActor = Ch;
+				// Own-content track: rigged, navmesh-driven character (collision-aware autopilot).
+				ADataFarmCharacter* Ch = W->SpawnActor<ADataFarmCharacter>(FVector(0, 0, 150), FRotator::ZeroRotator, SP);
+				if (Ch)
+				{
+					Ch->Configure(Cfg.Character.Mesh, Cfg.Character.AnimBp, Cfg.Character.Wardrobe);
+					if (ADataFarmAIController* AI = Cast<ADataFarmAIController>(Ch->GetController()))
+					{
+						AI->InitExploration(Cfg.Seed);
+					}
+					Agent = Ch;
+					TrackedActor = Ch;
+				}
+			}
+			else
+			{
+				// Fallback: primitive open-floor wanderer (no skeletal mesh / no navmesh needed).
+				AExplorerCharacter* Ch = W->SpawnActor<AExplorerCharacter>(FVector(0, 0, 150), FRotator::ZeroRotator, SP);
+				if (Ch)
+				{
+					Ch->Init(Cfg.Seed, Cfg.AgentBounds);
+					Agent = Ch;
+					TrackedActor = Ch;
+				}
 			}
 		}
 	}
@@ -257,19 +278,46 @@ void ATickCaptureManager::SpawnTestScene()
 void ATickCaptureManager::UpdateFollowCamera()
 {
 	if (!TrackedActor) return;
-	const FVector C = TrackedActor->GetActorLocation();
-	const FRotator R = TrackedActor->GetActorRotation();
-	const FVector F = R.Vector();
+	const FVector Loc = TrackedActor->GetActorLocation();
+	const float YawDeg = TrackedActor->GetActorRotation().Yaw;
+
 	if (IsFPV())
 	{
-		SceneCapture->SetWorldLocationAndRotation(C + FVector(0, 0, 70) + F * 15.f, R);
+		// FPV: eye cam at the head socket / forward-up offset on the mesh (no smoothing).
+		FVector EyeLoc;
+		FRotator EyeRot;
+		if (ADataFarmCharacter* DFC = Cast<ADataFarmCharacter>(TrackedActor))
+		{
+			DFC->GetEyeViewPoint(EyeLoc, EyeRot);
+		}
+		else
+		{
+			const FRotator YawRot(0.f, YawDeg, 0.f);
+			EyeLoc = Loc + FVector(0, 0, 70) + YawRot.Vector() * 15.f;
+			EyeRot = YawRot;
+		}
+		SceneCapture->SetWorldLocationAndRotation(EyeLoc, EyeRot);
+		return;
+	}
+
+	// TPV: smooth-follow chase cam (ported from unrealzoo _chase_cam + the lerp loop).
+	// Target sits TpvBack behind + TpvHeight above the agent along its yaw-forward.
+	const float YawRad = FMath::DegreesToRadians(YawDeg);
+	const FVector Fwd(FMath::Cos(YawRad), FMath::Sin(YawRad), 0.f);
+	const FVector Tgt = Loc - Cfg.TpvBack * Fwd + FVector(0.f, 0.f, Cfg.TpvHeight);
+	if (!bCamInit)
+	{
+		CamLoc = Tgt;        // first frame: snap (no lerp)
+		CamYaw = YawRad;
+		bCamInit = true;
 	}
 	else
 	{
-		const FVector Cam = C - F * 350.f + FVector(0, 0, 160);
-		const FRotator Look = (C + FVector(0, 0, 60) - Cam).Rotation();
-		SceneCapture->SetWorldLocationAndRotation(Cam, Look);
+		CamLoc += Cfg.TpvSmooth * (Tgt - CamLoc);
+		CamYaw += Cfg.TpvSmooth * FMath::UnwindRadians(YawRad - CamYaw);   // shortest-arc yaw lerp
 	}
+	const FRotator Rot(Cfg.TpvPitch, FMath::RadiansToDegrees(CamYaw), 0.f);
+	SceneCapture->SetWorldLocationAndRotation(CamLoc, Rot);
 }
 
 void ATickCaptureManager::Finish()

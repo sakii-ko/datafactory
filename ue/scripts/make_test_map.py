@@ -30,5 +30,11 @@ spawn(unreal.SkyAtmosphere)
 spawn(unreal.ExponentialHeightFog)
 spawn(unreal.PlayerStart, (0, 0, 120))
 
+# Navmesh bounds so the rigged-character AIController (GetRandomReachablePointInRadius) has a
+# navmesh to query at runtime. With RuntimeGeneration=Dynamic + bAutoCreateNavigationData (ini),
+# a RecastNavMesh auto-builds inside these bounds. The volume brush scales with the actor.
+nav = spawn(unreal.NavMeshBoundsVolume, (0, 0, 100))
+nav.set_actor_scale3d(unreal.Vector(60, 60, 8))   # ~120x120m x 16m over the 80x80m floor
+
 les.save_current_level()
-unreal.log("TickCapture: wrote /Game/Maps/Capture")
+unreal.log("TickCapture: wrote /Game/Maps/Capture (with NavMeshBoundsVolume)")

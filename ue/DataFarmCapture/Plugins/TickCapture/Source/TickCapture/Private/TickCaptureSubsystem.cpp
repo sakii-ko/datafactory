@@ -53,6 +53,28 @@ void UTickCaptureSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	Obj->TryGetBoolField(TEXT("agent_mode"), Cfg.bAgentMode);
 	if (Obj->TryGetNumberField(TEXT("agent_bounds"), D)) Cfg.AgentBounds = static_cast<float>(D);
 
+	// optional own-content character: {id, mesh, anim_bp, wardrobe: {slot: path, ...}}
+	const TSharedPtr<FJsonObject>* CharObj = nullptr;
+	if (Obj->TryGetObjectField(TEXT("character"), CharObj) && CharObj && CharObj->IsValid())
+	{
+		(*CharObj)->TryGetStringField(TEXT("id"), Cfg.Character.Id);
+		(*CharObj)->TryGetStringField(TEXT("mesh"), Cfg.Character.Mesh);
+		(*CharObj)->TryGetStringField(TEXT("anim_bp"), Cfg.Character.AnimBp);
+		const TSharedPtr<FJsonObject>* Ward = nullptr;
+		if ((*CharObj)->TryGetObjectField(TEXT("wardrobe"), Ward) && Ward && Ward->IsValid())
+		{
+			for (const auto& Pair : (*Ward)->Values)   // slot -> mesh path
+			{
+				FString PartPath;
+				if (Pair.Value.IsValid() && Pair.Value->TryGetString(PartPath) && !PartPath.IsEmpty())
+				{
+					Cfg.Character.Wardrobe.Add(PartPath);
+				}
+			}
+		}
+		Cfg.bAgentMode = true;   // a character implies the walking-agent path
+	}
+
 	if (Cfg.OutDir.IsEmpty())
 	{
 		UE_LOG(LogTemp, Error, TEXT("TickCapture: config missing out_dir"));

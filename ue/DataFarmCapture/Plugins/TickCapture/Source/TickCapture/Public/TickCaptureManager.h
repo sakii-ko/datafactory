@@ -8,6 +8,18 @@ class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 class FRHIGPUTextureReadback;
 
+// Optional own-content character (render_config.json "character": {id, mesh, anim_bp, wardrobe}).
+// When Mesh is set, the manager spawns a navmesh-driven ADataFarmCharacter instead of the
+// primitive AExplorerCharacter.
+struct FCharacterConfig
+{
+	FString Id;
+	FString Mesh;
+	FString AnimBp;
+	TArray<FString> Wardrobe;
+	bool IsSet() const { return !Mesh.IsEmpty(); }
+};
+
 struct FCaptureConfig
 {
 	FString EpisodeId = TEXT("ep");
@@ -22,6 +34,13 @@ struct FCaptureConfig
 	bool bOrbitTest = false;
 	bool bAgentMode = false;
 	float AgentBounds = 1500.f;
+	FCharacterConfig Character;
+
+	// TPV smooth-follow chase cam (defaults mirror UnrealZooConfig in unrealzoo.py).
+	float TpvBack = 350.f;     // distance behind the agent (cm)
+	float TpvHeight = 180.f;   // height above the agent (cm)
+	float TpvPitch = -12.f;    // downward pitch (deg)
+	float TpvSmooth = 0.25f;   // lerp factor toward the behind-agent target (0..1)
 };
 
 // Tick-synchronized headless capture: each tick samples (RGB, player 6-DoF, camera 6-DoF,
@@ -67,6 +86,11 @@ private:
 	bool bConfigured = false;
 	bool bDone = false;
 	uint8 Action[6] = {0, 0, 0, 0, 0, 0};
+
+	// TPV smooth-follow chase-cam state (lerps position + yaw toward the behind-agent target).
+	FVector CamLoc = FVector::ZeroVector;
+	float CamYaw = 0.f;   // radians
+	bool bCamInit = false;
 
 	struct FPendingReadback
 	{
