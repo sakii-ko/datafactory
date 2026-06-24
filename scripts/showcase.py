@@ -34,35 +34,49 @@ def _grid(cells, out, cols, title, tw, th):
     print("wrote", out, f"({len(cells)} cells)")
 
 
+def _req(c, cmd, timeout=20):
+    try:
+        return c.request(cmd, timeout=timeout)
+    except TypeError:        # older unrealcv: request() has no timeout kwarg
+        return c.request(cmd)
+
+
 def lineup(a):
     from unrealcv import Client
-    c = Client((a.host, a.port)); c.connect(timeout=15)
+    c = Client((a.host, a.port)); c.connect(timeout=20)
+    for _ in range(40):      # ready-gate: wait until the env answers status (else early cmds hang)
+        try:
+            if _req(c, "vget /unrealcv/status", 8):
+                break
+        except Exception:  # noqa: BLE001
+            pass
+        time.sleep(2)
     for cmd in ("vrun r.EyeAdaptationQuality 0", "vrun r.EyeAdaptation.MethodOverride 2"):
-        c.request(cmd)
+        _req(c, cmd)
     if a.scene:
-        c.request(f"vset /action/game/level {a.scene}"); time.sleep(12)
-    c.request("vset /objects/spawn_from_path /Game/SmartLocomotion/Blueprints/BP_Character.BP_Character_C sc")
-    c.request("vbp sc set_phy 0")
+        _req(c, f"vset /action/game/level {a.scene}", 60); time.sleep(12)
+    _req(c, "vset /objects/spawn_from_path /Game/SmartLocomotion/Blueprints/BP_Character.BP_Character_C sc")
+    _req(c, "vbp sc set_phy 0")
     for _ in range(12):                                  # teleport to a navmesh point (clear ground)
-        r = c.request("vbp sc generate_nav_goal 8000 0")
+        r = _req(c, "vbp sc generate_nav_goal 8000 0")
         try:
             xyz = [float(p.split("=")[1]) for p in json.loads(r).get("nav_goal", "").split() if "=" in p]
             if len(xyz) == 3:
-                c.request(f"vset /object/sc/location {xyz[0]} {xyz[1]} {xyz[2]}"); break
+                _req(c, f"vset /object/sc/location {xyz[0]} {xyz[1]} {xyz[2]}"); break
         except Exception:  # noqa: BLE001
             pass
         time.sleep(2)
     time.sleep(1)
-    loc = [float(x) for x in c.request("vget /object/sc/location").split()]
-    yawd = float(c.request("vget /object/sc/rotation").split()[1]); yaw = np.deg2rad(yawd)
+    loc = [float(x) for x in _req(c, "vget /object/sc/location").split()]
+    yawd = float(_req(c, "vget /object/sc/rotation").split()[1]); yaw = np.deg2rad(yawd)
     fwd = np.array([np.cos(yaw), np.sin(yaw)])
     cam = (loc[0] + a.dist * fwd[0], loc[1] + a.dist * fwd[1], loc[2] + a.height)   # in front of agent
-    c.request(f"vset /camera/0/location {cam[0]:.1f} {cam[1]:.1f} {cam[2]:.1f}")
-    c.request(f"vset /camera/0/rotation -6 {yawd + 180:.1f} 0")                     # look back at its front
+    _req(c, f"vset /camera/0/location {cam[0]:.1f} {cam[1]:.1f} {cam[2]:.1f}")
+    _req(c, f"vset /camera/0/rotation -6 {yawd + 180:.1f} 0")                       # look back at its front
     cells = []
     for app in range(a.lo, a.hi):
-        c.request(f"vbp sc set_app {app}"); time.sleep(0.3)
-        d = c.request("vget /camera/0/lit png")
+        _req(c, f"vbp sc set_app {app}"); time.sleep(0.3)
+        d = _req(c, "vget /camera/0/lit png")
         if isinstance(d, (bytes, bytearray)):
             cells.append((f"app {app}", Image.open(io.BytesIO(d)).convert("RGB")))
     c.disconnect()
