@@ -16,6 +16,15 @@ standard_rig = "cesiumman"
 license = "CC-BY-4.0"
 tags = ["humanoid", "cc0-sample"]
 
+[[character]]
+id = "brainstem"
+url = "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BrainStem/glTF-Binary/BrainStem.glb"
+mesh = "/Game/DataFarm/Characters/brainstem/brainstem.brainstem"
+anim = "/Game/DataFarm/Characters/brainstem/brainstem_Anim.brainstem_Anim"
+standard_rig = "brainstem"
+license = "CC-BY-4.0"
+tags = ["robot", "cc0-sample"]
+
 # Add more with: scripts/fetch_character.sh <id> <glb_url>   (downloads + Interchange-imports +
 # prints the mesh/anim object paths to paste here). Mixamo/Fab characters: import the FBX via
 # ue/scripts/import_character.py once you've provided them (docs/own-track-assets.md).
