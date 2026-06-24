@@ -32,6 +32,8 @@ class UnrealZooConfig:
     cam_id: int = 0              # camera mode: which camera to drive
     agent_bp: str = "/Game/SmartLocomotion/Blueprints/BP_Character.BP_Character_C"
     agent_name: str = "df_agent"
+    appearance: tuple[int, int] = (1, 19)   # per-episode `set_app` id range (human: 1..18) — free
+    #                                         character-appearance diversity, seeded by plan.seed
     policy: str = "navmesh"      # "navmesh" = autopilot between navmesh goals (collision-free,
     #                              high yield); "wander" = manual forward+turn-on-hit
     eye_offset: tuple[float, float, float] = (20.0, 0.0, 0.0)   # eye 20cm forward of pawn
@@ -258,6 +260,11 @@ class UnrealZooBackend(CaptureBackend):
             # the loop pick a fresh goal — teleporting between episodes can land off-mesh -> autopilot stalls
         name, eye = self.cfg.agent_name, self._eye
 
+        app_id = None
+        if agent:                                # W2: per-episode appearance (free character diversity)
+            app_id = int(rng.integers(self.cfg.appearance[0], self.cfg.appearance[1]))
+            self._req(c, f"vbp {name} set_app {app_id}")
+
         if not agent:                            # free-camera anchor (demo scene)
             loc = np.array([float(x) for x in self._req(c, f"vget /camera/{eye}/location").split()])
             yaw = np.deg2rad(float(self._req(c, f"vget /camera/{eye}/rotation").split()[1]))
@@ -269,6 +276,8 @@ class UnrealZooBackend(CaptureBackend):
             goal = self._nav_goal(c, name, tries=12)   # wait for navmesh build (multi-instance load)
             if goal:
                 self._nav_to(c, name, goal)
+            else:
+                navmesh = False                  # W4: scene has no navmesh -> fall back to wander
 
         if agent and self.cfg.warmup_steps:      # let the agent start moving + auto-exposure settle
             for _ in range(self.cfg.warmup_steps):
@@ -347,7 +356,7 @@ class UnrealZooBackend(CaptureBackend):
             label_kind=LabelKind.PRECISE_ACTION, scene_id=plan.scene_id or plan.map,
             fps=plan.fps, resolution=(w, h), seed=plan.seed,
             coord_frame=CoordFrame.UE_LEFT_CM,
-            extra={"license": "research-only", "mode": self.cfg.mode},
+            extra={"license": "research-only", "mode": self.cfg.mode, "app_id": app_id},
         )
         ep = Episode(meta, steps)
         write_episode(ep, out_root)
