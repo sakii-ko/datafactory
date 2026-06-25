@@ -1,0 +1,76 @@
+# Black Myth: Wukong — gameinject adapter (UE5).
+# First target. Fill `install.*` once the playable game is acquired (see ../../STATUS.md).
+# As of this commit the game is NOT installed on either Linux box — only extracted assets exist
+# under /root/nas/bigdata1/cjw/projs/blackmyth/asset-library (that is the rip project, not the game).
+
+[box]
+# PRIMARY (first proof): run IN-PLACE on the H100 box that holds the game — no 140 GB copy.
+# H100 confirmed Vulkan-graphics-capable (vulkaninfo: QUEUE_GRAPHICS_BIT, timestampComputeAndGraphics).
+# 1 GPU is fine to prove the pipeline. SCALE-OUT later: duan78 (8x A6000) — but its storage is SEPARATE
+# (/home/lff/bigdata1 != this NAS), so duan78 first needs a 140 GB game copy. Defer until proven.
+host        = "local-h100"
+game_root   = "/root/nas/bigdata1/cjw/games/blackmyth"
+runtime_dir = "/root/nas/bigdata1/cjw/games/_gi_runtime"    # GE-Proton + umu + UE4SS (writable NAS)
+vulkan_icd  = "/etc/vulkan/icd.d/nvidia_icd.json"           # H100 nvidia ICD (graphics-capable)
+rootless    = true                                          # no sudo anywhere; userspace Proton + Xvfb
+
+[game]
+id          = "blackmyth"
+engine      = "ue5"
+steam_appid = 2358720            # Black Myth: Wukong on Steam
+exe_relpath = "b1/Binaries/Win64/b1-Win64-Shipping.exe"
+denuvo      = true               # ~5 activations/24h; pin Proton version (a swap counts as a new machine)
+
+[install]
+# FOUND: full 140 GB Windows install on the NAS (21 game paks, b1-Win64-Shipping.exe 728 MB).
+game_root   = "/root/nas/bigdata1/cjw/games/blackmyth"
+game_build  = "21393610"         # Steam buildid (steamapps/appmanifest_2358720.acf); pin UE4SS offsets here
+ue4ss_dir   = ""                 # TODO: install UE4SS into b1/Binaries/Win64 (proxy DLL beside the exe)
+ue4ss_proxy = "xinput1_3.dll"    # 2.5.2/xinput injects under Proton; 3.0.1/dwmapi reported to silently fail
+# NB: b1/Content/Paks/*.sig present -> pak signature checking on; UE4SS may need pak-sig bypass (Denuvo title)
+
+[proton]
+proton_dir  = ""                 # e.g. ~/.steam/steam/steamapps/common/Proton 9.0
+version     = "GE-Proton9"       # pin it (VKD3D-Proton has the UE5 mesh-shader fixes)
+wine_dll_overrides = "xinput1_3=n,b"   # so UE4SS proxy loads under Wine
+
+# --- reflection levers (UE4SS Lua); [VALIDATE] all against the running game ---------------------
+[classes]
+player_controller = "PlayerController"   # FindFirstOf; BMW may subclass — confirm via object dump
+pawn_is_player    = true                 # drive PC.Pawn directly (Mode B: AddMovementInput)
+tick_function     = "/Script/Engine.Actor:ReceiveTick"   # per-frame hook for drive+log
+
+[hud]
+command   = "showhud"            # kills canvas AHUD; BMW UI is largely UMG -> also hide the widget
+umg_widget = ""                  # [VALIDATE] widget class to set visibility=Hidden (dump UMG to find)
+
+[nav]
+mode = "trace"                   # "trace" = AddMovementInput + line-trace terrain probing (nav-free,
+                                 #            recommended primary — BMW World-Partition navmesh is
+                                 #            streamed per-cell, likely NOT globally queryable)
+# mode = "navmesh"               # only if FindAllOf("RecastNavMesh")+GetRandomReachablePointInRadius works
+
+[capture]
+backend = "obs-vkcapture"        # Vulkan swapchain grab under Proton; ReShade-Proton as depth fallback
+depth   = "reshade"              # ReShade depth tap ([VALIDATE]: DLSS/TAA can corrupt — force native/off)
+
+# Navigation-data mode: we want clean roaming footage — NO enemies, no combat, all areas reachable.
+# Both are UE4SS-Lua jobs, scheduled AFTER UE4SS injects + we dump the object graph (to find the classes).
+[navdata]
+despawn_enemies = true   # each tick: FindAllOf(<enemy base class>) -> K2_DestroyActor (sweep newly-spawned too)
+enemy_classes   = []     # [VALIDATE] fill from the object-graph dump (BMW enemy/monster pawn class names)
+map_unlock_mode = "load_each"
+# "load_each": enumerate map levels (from pak/asset-registry names) and console `open <map>` one by one —
+#              cleanest for systematic navigation coverage of every area.
+# "free_roam":  disable BlockingVolume/KillZVolume + teleport past invisible walls in the live world.
+disable_blocking_volumes = true   # find BlockingVolume/KillZVolume -> set collision off (free_roam mode)
+map_list = []            # [VALIDATE] fill from extracted .umap names under b1/Content (the playable maps)
+
+[roam]
+fps         = 30
+num_frames  = 900                # 30 s default clip
+speed       = 1.0
+turn_jitter = 0.15
+turn_step   = 0.6
+probe_dist  = 250.0              # cm; forward line-trace distance for wall/edge detection
+boot_delay_ms = 8000            # wait for level+pawn to stream in before arming

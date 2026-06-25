@@ -52,6 +52,11 @@ void UTickCaptureSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	Obj->TryGetBoolField(TEXT("orbit_test"), Cfg.bOrbitTest);
 	Obj->TryGetBoolField(TEXT("agent_mode"), Cfg.bAgentMode);
 	if (Obj->TryGetNumberField(TEXT("agent_bounds"), D)) Cfg.AgentBounds = static_cast<float>(D);
+	// optional TPV chase-cam overrides (else the defaults: back 350 / height 180 / pitch -12)
+	if (Obj->TryGetNumberField(TEXT("tpv_back"), D)) Cfg.TpvBack = static_cast<float>(D);
+	if (Obj->TryGetNumberField(TEXT("tpv_height"), D)) Cfg.TpvHeight = static_cast<float>(D);
+	if (Obj->TryGetNumberField(TEXT("tpv_pitch"), D)) Cfg.TpvPitch = static_cast<float>(D);
+	if (Obj->TryGetNumberField(TEXT("tpv_smooth"), D)) Cfg.TpvSmooth = static_cast<float>(D);
 
 	// optional own-content character: {id, mesh, anim_bp, wardrobe: {slot: path, ...}}
 	const TSharedPtr<FJsonObject>* CharObj = nullptr;

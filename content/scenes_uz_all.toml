@@ -1,0 +1,810 @@
+# Auto-generated: all UnrealZoo candidate maps (for a full scene-render showcase).
+# A render run reveals which load + have navmesh; non-loaders drop.
+
+[[scene]]
+id = "uz_abandoneddistrict"
+backend = "unrealzoo"
+map = "AbandonedDistrict"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_ancientruins"
+backend = "unrealzoo"
+map = "AncientRuins"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_arctic"
+backend = "unrealzoo"
+map = "Arctic"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_asianmedivalcity"
+backend = "unrealzoo"
+map = "AsianMedivalCity"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_asiantemple"
+backend = "unrealzoo"
+map = "AsianTemple"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_brass_gardens"
+backend = "unrealzoo"
+map = "Brass_Gardens"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_brass_palace"
+backend = "unrealzoo"
+map = "Brass_Palace"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_brass_streets"
+backend = "unrealzoo"
+map = "Brass_Streets"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_cabin_lake"
+backend = "unrealzoo"
+map = "Cabin_Lake"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_chinesewatertown_ver1"
+backend = "unrealzoo"
+map = "ChineseWaterTown_Ver1"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_chinese_landscape_demo"
+backend = "unrealzoo"
+map = "Chinese_Landscape_Demo"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_colosseum_desert"
+backend = "unrealzoo"
+map = "Colosseum_Desert"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_commandcenter"
+backend = "unrealzoo"
+map = "CommandCenter"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_containeryard_day"
+backend = "unrealzoo"
+map = "ContainerYard_Day"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_containeryard_night"
+backend = "unrealzoo"
+map = "ContainerYard_Night"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_courtyard"
+backend = "unrealzoo"
+map = "CourtYard"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_demo_roof"
+backend = "unrealzoo"
+map = "Demo_Roof"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_demonstration_castle"
+backend = "unrealzoo"
+map = "Demonstration_Castle"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_demonstration_cave"
+backend = "unrealzoo"
+map = "Demonstration_Cave"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_desertmap"
+backend = "unrealzoo"
+map = "DesertMap"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_desert_ruins"
+backend = "unrealzoo"
+map = "Desert_ruins"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_downtownwest"
+backend = "unrealzoo"
+map = "DowntownWest"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_dungeon_demo_00"
+backend = "unrealzoo"
+map = "Dungeon_Demo_00"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_ef_grounds"
+backend = "unrealzoo"
+map = "EF_Grounds"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_ef_gus"
+backend = "unrealzoo"
+map = "EF_Gus"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_ef_lewis_1"
+backend = "unrealzoo"
+map = "EF_Lewis_1"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_ef_lewis_2"
+backend = "unrealzoo"
+map = "EF_Lewis_2"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_eastern_garden"
+backend = "unrealzoo"
+map = "Eastern_Garden"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_englishcollege"
+backend = "unrealzoo"
+map = "EnglishCollege"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_flexibleroom"
+backend = "unrealzoo"
+map = "FlexibleRoom"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_forestgasstation"
+backend = "unrealzoo"
+map = "ForestGasStation"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_grass_hills"
+backend = "unrealzoo"
+map = "Grass_Hills"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_greek_island"
+backend = "unrealzoo"
+map = "Greek_Island"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_hangar"
+backend = "unrealzoo"
+map = "Hangar"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_hospital"
+backend = "unrealzoo"
+map = "Hospital"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_hotel_corridor"
+backend = "unrealzoo"
+map = "Hotel_Corridor"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_industrialarea"
+backend = "unrealzoo"
+map = "IndustrialArea"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_interiordemo_new"
+backend = "unrealzoo"
+map = "InteriorDemo_NEW"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_japantrainstation_optimised"
+backend = "unrealzoo"
+map = "JapanTrainStation_Optimised"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_koreanpalace"
+backend = "unrealzoo"
+map = "KoreanPalace"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_lv_bazaar"
+backend = "unrealzoo"
+map = "LV_Bazaar"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_lv_soul_cave"
+backend = "unrealzoo"
+map = "LV_Soul_Cave"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_lighthouse"
+backend = "unrealzoo"
+map = "Lighthouse"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_lookouttower"
+backend = "unrealzoo"
+map = "LookoutTower"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_lowpolymedievalinterior_1"
+backend = "unrealzoo"
+map = "LowPolyMedievalInterior_1"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_map_chemicalplant_1"
+backend = "unrealzoo"
+map = "Map_ChemicalPlant_1"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_medieval_castle"
+backend = "unrealzoo"
+map = "Medieval_Castle"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_medieval_daytime"
+backend = "unrealzoo"
+map = "Medieval_Daytime"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_medieval_nighttime"
+backend = "unrealzoo"
+map = "Medieval_Nighttime"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_middleeast"
+backend = "unrealzoo"
+map = "MiddleEast"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_modularbuilding"
+backend = "unrealzoo"
+map = "ModularBuilding"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_modulargothic_day"
+backend = "unrealzoo"
+map = "ModularGothic_Day"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_modulargothic_night"
+backend = "unrealzoo"
+map = "ModularGothic_Night"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_modularneighborhood"
+backend = "unrealzoo"
+map = "ModularNeighborhood"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_modularscifiseason1"
+backend = "unrealzoo"
+map = "ModularSciFiSeason1"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_modularscifivillage"
+backend = "unrealzoo"
+map = "ModularSciFiVillage"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_modularvictoriancity"
+backend = "unrealzoo"
+map = "ModularVictorianCity"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_museum"
+backend = "unrealzoo"
+map = "Museum"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_old_factory_01"
+backend = "unrealzoo"
+map = "Old_Factory_01"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_old_town"
+backend = "unrealzoo"
+map = "Old_Town"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_operahouse"
+backend = "unrealzoo"
+map = "OperaHouse"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_operatingroom"
+backend = "unrealzoo"
+map = "OperatingRoom"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_parkinglot"
+backend = "unrealzoo"
+map = "ParkingLot"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_planetoutdoor"
+backend = "unrealzoo"
+map = "PlanetOutDoor"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_platformhangar"
+backend = "unrealzoo"
+map = "PlatFormHangar"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_platformfactory"
+backend = "unrealzoo"
+map = "PlatformFactory"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_postsoviet_village"
+backend = "unrealzoo"
+map = "PostSoviet_Village"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_pyramid"
+backend = "unrealzoo"
+map = "Pyramid"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_qa_holding_cells_a"
+backend = "unrealzoo"
+map = "QA_Holding_Cells_A"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_rainmap"
+backend = "unrealzoo"
+map = "RainMap"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_real_landscape"
+backend = "unrealzoo"
+map = "Real_Landscape"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_ruralaustralia_example_01"
+backend = "unrealzoo"
+map = "RuralAustralia_Example_01"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_ruralaustralia_example_02"
+backend = "unrealzoo"
+map = "RuralAustralia_Example_02"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_ruralaustralia_example_03"
+backend = "unrealzoo"
+map = "RuralAustralia_Example_03"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_russianwintertowndemo01"
+backend = "unrealzoo"
+map = "RussianWinterTownDemo01"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_schoolgymday"
+backend = "unrealzoo"
+map = "SchoolGymDay"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_science_fiction_valley_town"
+backend = "unrealzoo"
+map = "Science_Fiction_valley_town"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_snowmap"
+backend = "unrealzoo"
+map = "SnowMap"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_stadium"
+backend = "unrealzoo"
+map = "Stadium"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_stonepineforest"
+backend = "unrealzoo"
+map = "StonePineForest"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_storagehouse"
+backend = "unrealzoo"
+map = "Storagehouse"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_suburbneighborhood_day"
+backend = "unrealzoo"
+map = "SuburbNeighborhood_Day"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_suburbneighborhood_day_dooropen"
+backend = "unrealzoo"
+map = "SuburbNeighborhood_Day_dooropen"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_suburbneighborhood_night"
+backend = "unrealzoo"
+map = "SuburbNeighborhood_Night"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_sunsetmap"
+backend = "unrealzoo"
+map = "SunsetMap"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_swimmingpool"
+backend = "unrealzoo"
+map = "SwimmingPool"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_templeplaza"
+backend = "unrealzoo"
+map = "TemplePlaza"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_templesofcambodia_01_01_exterior"
+backend = "unrealzoo"
+map = "TemplesOfCambodia_01_01_Exterior"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_terraindemo"
+backend = "unrealzoo"
+map = "TerrainDemo"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_tokyo"
+backend = "unrealzoo"
+map = "Tokyo"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_ultimatefarming"
+backend = "unrealzoo"
+map = "UltimateFarming"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_undergroundparking"
+backend = "unrealzoo"
+map = "UndergroundParking"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_universityclassroom"
+backend = "unrealzoo"
+map = "UniversityClassroom"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_venice"
+backend = "unrealzoo"
+map = "Venice"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_victoriantrainstation"
+backend = "unrealzoo"
+map = "VictorianTrainStation"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_watermills"
+backend = "unrealzoo"
+map = "Watermills"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_western_garden"
+backend = "unrealzoo"
+map = "Western_Garden"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_wildwest"
+backend = "unrealzoo"
+map = "WildWest"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_demonstration_bunker"
+backend = "unrealzoo"
+map = "demonstration_BUNKER"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_racing_track"
+backend = "unrealzoo"
+map = "racing_track"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]
+
+[[scene]]
+id = "uz_supermarket"
+backend = "unrealzoo"
+map = "supermarket"
+viewpoints = ["fpv"]
+license = "research-only"
+tags = ["unrealzoo", "agent"]

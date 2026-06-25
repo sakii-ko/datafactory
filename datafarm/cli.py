@@ -23,6 +23,10 @@ def _backend(name: str):
     if name == "ue":
         from .backends.ue import UEBackend
         return UEBackend()
+    if name == "gameinject" or name.startswith("gameinject:"):
+        from .backends.gameinject import GameInjectBackend
+        game = name.split(":", 1)[1] if ":" in name else "blackmyth"
+        return GameInjectBackend(game=game)
     return _BACKENDS[name]()
 
 

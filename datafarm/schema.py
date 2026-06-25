@@ -20,6 +20,7 @@ class Viewpoint(str, Enum):
 class LabelKind(str, Enum):
     PRECISE_ACTION = "precise_action"  # engine ground truth (UE/AAA)
     VIDEO_ONLY = "video_only"          # no actions, or pose-inferred only
+    APPROX_ACTION = "approx_action"    # gameinject: action authored by us, but capture sync/depth best-effort
 
 
 class Source(str, Enum):
